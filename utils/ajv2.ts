@@ -1,5 +1,5 @@
 import * as ajv from 'ajv';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 type SPECIAL_TOKEN = '++';
 const ALL_TOKENS = ['++'];
