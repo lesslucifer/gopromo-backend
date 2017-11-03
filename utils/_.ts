@@ -391,6 +391,16 @@ class Utils {
     pairSecond<T>(s: string, sep: string = "|", f: (s: string) => T = (s) => {return <T> <any> s}) {
         return f(s.split(sep)[1]);
     }
+
+    parseIntNull(v: any): number {
+        const i = lodash.parseInt(v);
+        return isNaN(i) ? null : (i || null);
+    }
+
+    parseFloatNull(v: any): number {
+        const f = parseFloat(v);
+        return isNaN(f) ? null : (f || null);
+    }
 };
 
 interface LodashExtension {

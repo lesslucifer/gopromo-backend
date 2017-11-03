@@ -1,12 +1,15 @@
 import _ from '../../utils/_';
 
-interface IPromotionReward {
+import { DiscountPercentReward } from './discount_percent';
+import { DiscountAmountReward } from './discount_amount';
+
+export interface IPromotionReward {
     key(): string;
     isValid(data: any): Promise<boolean>;
 }
 
-class PromotionRewards {
-    readonly REWARDS: IPromotionReward[] = [];
+export class PromotionRewards {
+    readonly REWARDS: IPromotionReward[] = [new DiscountPercentReward(), new DiscountAmountReward()];
     readonly REWARD_REPOSITORY = _.keyBy(this.REWARDS, r => r.key());
 
     async isValid(data: any): Promise<boolean> {
