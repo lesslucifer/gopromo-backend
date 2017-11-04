@@ -7,13 +7,22 @@ import * as CONN from './glob/conn';
 import HC from './glob/hc';
 import _ from './utils/_';
 
+
 import SessionServ from './serv/sess';
+import { PromotionRules } from './serv/rules/index';
 
 // Import routers
 class Program {
-    public static main(): number {
+    public static async main(): Promise<number> {
         ENV.configure(process.argv.length > 2 ? process.argv[2] : "");
         CONN.configureConnections();
+
+        const test = new PromotionRules();
+        const data = {
+            userId: 13,
+            abc: '12234'
+        }
+        const abc = await test.checkUsage({max_usage_per_user: data});
 
         // start cronjob
 
