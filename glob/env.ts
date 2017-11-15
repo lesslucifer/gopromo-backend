@@ -1,22 +1,13 @@
-export enum ENV_NAME {
-    PRODUCTION,
-    STAGING,
-    DEVELOPMENT
+export interface ENV_DB_CONFIG {
+    REDIS: any;
+    MONGO: {
+        CONNECTION_STRING: string;
+        OPTIONS: any;
+    }
 }
 
-export let name: ENV_NAME
-export let port: number
-
-export function configure(env: string) {
-    this.port = 1234;
-    env = env.toLowerCase();
-    if (env == 'prod' || env == 'production') {
-        this.name = ENV_NAME.PRODUCTION;
-    }
-    else if (env == 'stag' || env == 'staging') {
-        this.name = ENV_NAME.STAGING;
-    }
-    else {
-        this.name = ENV_NAME.DEVELOPMENT;
-    }
+export interface ENV_CONFIG {
+    NAME: string;
+    HTTP_PORT: number;
+    DB: ENV_DB_CONFIG
 }

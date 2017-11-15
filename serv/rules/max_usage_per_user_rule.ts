@@ -9,7 +9,7 @@ const validJson = ajv({
     '++': false
 });
 
-export class PromotionContextMaxUsagePerUser implements IPromotionContext{
+export class PromotionContextMaxUsagePerUser implements IPromotionContext {
     constructor(data: any) {
         this.userId = data.userId;
     }

@@ -1,7 +1,5 @@
 import * as moment from 'moment';
 
-import { IMysqlQuery } from '../utils/mysql-promisified';
-
 import * as CONN from '../glob/conn';
 import _ from '../utils/_';
 

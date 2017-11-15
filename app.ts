@@ -2,27 +2,19 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as moment from 'moment';
 
-import * as ENV from './glob/env';
-import * as CONN from './glob/conn';
+import { ENV_CONFIG } from './glob/env';
+import CONN from './glob/conn';
 import HC from './glob/hc';
 import _ from './utils/_';
 
-
 import SessionServ from './serv/sess';
-import { PromotionRules } from './serv/rules/index';
 
 // Import routers
-class Program {
-    public static async main(): Promise<number> {
-        ENV.configure(process.argv.length > 2 ? process.argv[2] : "");
-        CONN.configureConnections();
 
-        const test = new PromotionRules();
-        const data = {
-            userId: 13,
-            abc: '12234'
-        }
-        const abc = await test.checkUsage({max_usage_per_user: data});
+class Program {
+    public static main(): number {
+        const envConfig: ENV_CONFIG = require(process.env.config || './env.json');
+        CONN.configureConnections(envConfig.DB);
 
         // start cronjob
 
@@ -49,12 +41,12 @@ class Program {
 
             next();
         });
-
+    
         // Configure routes
 
         // Start server
-        server.listen(ENV.port, function () {
-            console.log("Listen on port " + ENV.port + " ...");
+        server.listen(envConfig.HTTP_PORT, function () {
+            console.log("Listen on port " + envConfig.HTTP_PORT + " ...");
         });
 
         return 0;
