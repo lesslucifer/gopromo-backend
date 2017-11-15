@@ -14,10 +14,10 @@ export interface IPromotionContext {
 }
 
 export class PromotionRules {
-    readonly RULES: IPromotionRule[] = [new MaxUsagePerUserRule(), new MaxUsageRule()];
-    readonly RULE_REPOSITORY = _.keyBy(this.RULES, r => r.key());
+    static readonly RULES: IPromotionRule[] = [new MaxUsagePerUserRule(), new MaxUsageRule()];
+    static readonly RULE_REPOSITORY = _.keyBy(PromotionRules.RULES, r => r.key());
     
-    public async isValid(data: any): Promise<boolean> {
+    static async isValid(data: any): Promise<boolean> {
         if (!_.isObject(data)) {
             return false;
         }
@@ -36,7 +36,7 @@ export class PromotionRules {
         return true;
     }
 
-    async checkUsage(data: any): Promise<boolean> {
+    static async checkUsage(data: any): Promise<boolean> {
         if (!_.isObject(data)) {
             return false;
         }
@@ -55,3 +55,5 @@ export class PromotionRules {
         return true;
     }
 }
+
+export default PromotionRules;

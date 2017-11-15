@@ -10,7 +10,7 @@ export class PromotionContextMaxUsagePerUser implements IPromotionContext {
 
 export class MaxUsagePerUserRule implements IPromotionRule {
     key() {
-        return 'max_usage_per_user';
+        return 'max_usage_per_user_per_day';
     }
 
     async isValid(data: any): Promise<boolean> {

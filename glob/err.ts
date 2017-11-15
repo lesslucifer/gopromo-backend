@@ -15,6 +15,11 @@ export const ERR = {
     // User profile: (-201 -> -299)
     OLD_PASSWORD_WRONG: -201,
     INVALID_PASSWORD_FORMAT: -202,
+
+    // Promotion
+    INVALID_RULES_FORMAT: -301,
+    INVALID_REWARDS_FORMAT: -302,
+    NOT_ENOUGH_CODE_SPACE: -303
 };
 
 export default ERR;

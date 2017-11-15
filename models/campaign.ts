@@ -1,15 +1,15 @@
 import * as moment from 'moment';
 
-import * as CONN from '../glob/conn';
+import CONN from '../glob/conn';
 import _ from '../utils/_';
 
-export interface ICampaign {
-}
+import { IMongoModel } from './mongo-model';
 
-export class CampaignModel {
-    static get Collection() {
-        return 
-    }
+export interface ICampaign extends IMongoModel {
+    name: string;
+    charset: string;
+    pattern: string;
+    rules: any;
+    rewards: any;
+    metadata: any;
 }
-
-export default CampaignModel;

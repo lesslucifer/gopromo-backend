@@ -368,7 +368,7 @@ class Utils {
             }
         }
 
-        return lodash.mapValues(dict, iterator);
+        return <any> lodash.mapValues(dict, iterator);
     }
     
     arr(from: number, to: number) {

@@ -1,12 +1,5 @@
 import _ from '../../utils/_';
-import ajv2 from '../../utils/ajv2';
 import { IPromotionRule, IPromotionContext } from './index'
-
-const ajv = ajv2();
-const validJson = ajv({
-    '+@max_usage': 'number|>0',
-    '++': false
-});
 
 export class PromotionContextMaxUsage implements IPromotionContext {
     constructor(data: any) {
@@ -21,7 +14,12 @@ export class MaxUsageRule implements IPromotionRule {
     }
 
     async isValid(data: any): Promise<boolean> {
-        return true && validJson(data);
+        const val = _.parseIntNull(data);
+        if (val == null) {
+            return false;
+        }
+
+        return 0 < val;
     }
 
     async checkUsage(ctx: PromotionContextMaxUsage): Promise<boolean> {

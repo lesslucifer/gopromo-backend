@@ -7,14 +7,19 @@ import CONN from './glob/conn';
 import HC from './glob/hc';
 import _ from './utils/_';
 
+import * as MODELS from './models';
+
 import SessionServ from './serv/sess';
 
 // Import routers
+import CampaignRoute from './routes/campaign';
 
 class Program {
-    public static main(): number {
+    public static async main(): Promise<number> {
         const envConfig: ENV_CONFIG = require(process.env.config || './env.json');
-        CONN.configureConnections(envConfig.DB);
+        await CONN.configureConnections(envConfig.DB);
+
+        MODELS.init(CONN.MONGO);
 
         // start cronjob
 
@@ -43,6 +48,7 @@ class Program {
         });
     
         // Configure routes
+        server.use('/campaigns', CampaignRoute);
 
         // Start server
         server.listen(envConfig.HTTP_PORT, function () {

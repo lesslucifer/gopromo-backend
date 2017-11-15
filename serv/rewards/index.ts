@@ -9,10 +9,10 @@ export interface IPromotionReward {
 }
 
 export class PromotionRewards {
-    readonly REWARDS: IPromotionReward[] = [new DiscountPercentReward(), new DiscountAmountReward()];
-    readonly REWARD_REPOSITORY = _.keyBy(this.REWARDS, r => r.key());
+    static readonly REWARDS: IPromotionReward[] = [new DiscountPercentReward(), new DiscountAmountReward()];
+    static readonly REWARD_REPOSITORY = _.keyBy(PromotionRewards.REWARDS, r => r.key());
 
-    async isValid(data: any): Promise<boolean> {
+    static async isValid(data: any): Promise<boolean> {
         if (!_.isObject(data)) {
             return false;
         }
@@ -32,3 +32,5 @@ export class PromotionRewards {
         return true;
     }
 }
+
+export default PromotionRewards;
