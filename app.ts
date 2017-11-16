@@ -37,7 +37,7 @@ class Program {
             res.header('Access-Control-Allow-Credentials', 'true');
             res.header('Access-Control-Max-Age', '86400');
             res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, ' +
-                'Content-Type, Accept, Authentication, Authorization, sess');
+                'Content-Type, Accept, Authentication, Authorization, X-Consumer-Username, sess');
 
             if (req.method.toUpperCase() == 'OPTIONS') {
                 res.statusCode = 204;
@@ -47,7 +47,7 @@ class Program {
 
             next();
         });
-    
+
         // Configure routes
         server.use('/auth', AuthRoute);
         server.use('/campaigns', CampaignRoute);
