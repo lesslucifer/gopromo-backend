@@ -5,14 +5,16 @@ import { DiscountAmountReward } from './discount_amount';
 
 export interface IPromotionReward {
     key(): string;
-    isValid(data: any): Promise<boolean>;
+    isValidConfig(data: any): Promise<boolean>;
+    isValidData(data: any): Promise<boolean>;
+    applyPromotion(config: any, data: any): Promise<any>;
 }
 
 export class PromotionRewards {
     static readonly REWARDS: IPromotionReward[] = [new DiscountPercentReward(), new DiscountAmountReward()];
     static readonly REWARD_REPOSITORY = _.keyBy(PromotionRewards.REWARDS, r => r.key());
 
-    static async isValid(data: any): Promise<boolean> {
+    static async isValidConfig(data: any): Promise<boolean> {
         if (!_.isObject(data)) {
             return false;
         }
@@ -23,12 +25,32 @@ export class PromotionRewards {
                 return false;
             }
 
-            const isValid = await reward.isValid(data[key]);
+            const isValid = await reward.isValidConfig(data[key]);
             if (!isValid) {
                 return false;
             }
         }
 
+        return true;
+    }
+    
+    static async isValidData(rewards: any, data: any): Promise<boolean> {
+        if (!_.isObject(data)) {
+            return false;
+        }
+
+        for (const key in rewards) {
+            const reward = this.REWARD_REPOSITORY[key];
+            if (!reward) {
+                return false;
+            }
+
+            const isValid = await reward.isValidData(data);
+            if (!isValid) {
+                return false;
+            }
+        }
+        
         return true;
     }
 }

@@ -1,3 +1,4 @@
+import * as mongodb from 'mongodb';
 import * as lodash from 'lodash';
 import * as ajv from 'ajv';
 import * as bodyParser from 'body-parser';
@@ -334,7 +335,7 @@ class Utils {
     sha1: (s: string) => string = sha1;
     format: (format: string, ...args: any[]) => string = sprintf;
 
-    zipToObj(keys: string[], fVal: (string) => any): lodash.Dictionary<any> {
+    zipToObj<T>(keys: string[], fVal: (string) => T): lodash.Dictionary<T> {
         return keys.reduce((obj, k) => {
             obj[k] = fVal(k);
             return obj;
@@ -400,6 +401,10 @@ class Utils {
     parseFloatNull(v: any): number {
         const f = parseFloat(v);
         return isNaN(f) ? null : (f || null);
+    }
+    
+    mObjId(id: string) {
+        return new mongodb.ObjectID(id);
     }
 };
 

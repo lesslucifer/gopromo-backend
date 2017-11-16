@@ -1,12 +1,9 @@
 import * as express from 'express';
 
-// import {IUser} from '../model/user';
-interface IUser {
-    
-}
+import { IUserInfo } from '../models';
 
 interface IReqSession {
-    user?: IUser
+    user?: IUserInfo
 }
 
 declare module "express-serve-static-core" {

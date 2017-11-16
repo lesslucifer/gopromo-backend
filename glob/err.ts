@@ -6,6 +6,8 @@ export const ERR = {
     OBJECT_NOT_FOUND: -4,
     INVALID_FORMAT: -5,
     INVALID_VERSION: -6,
+    OBJECT_IS_ALREADY_EXIST: -7,
+    DATA_MISMATCH: -8,
     
     // Login (-101 -> -199)
     INVALID_USERNAME_OR_PASSWORD: -101,
@@ -19,7 +21,8 @@ export const ERR = {
     // Promotion
     INVALID_RULES_FORMAT: -301,
     INVALID_REWARDS_FORMAT: -302,
-    NOT_ENOUGH_CODE_SPACE: -303
+    NOT_ENOUGH_CODE_SPACE: -303,
+    TRANSACTION_DATA_MISMATCH: -304
 };
 
 export default ERR;

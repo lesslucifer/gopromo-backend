@@ -31,7 +31,7 @@ const addCampaignBody = _ajv({
     '@metadata': {},
     '++': false
 });
-router.post('/', _.validBody(addCampaignBody), _.routeAsync(async (req) => {
+router.post('/', _.validBody(addCampaignBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const promotionCount: number = _.parseIntNull(req.body.promotions_count) || HC.DEFAULT_PROMO_COUNT;
 
     const pattern = req.body.pattern || HC.DEFAULT_PROMO_PATTERN;
@@ -41,18 +41,19 @@ router.post('/', _.validBody(addCampaignBody), _.routeAsync(async (req) => {
     }
 
     const rules: any = req.body.rules;
-    const isValidRules = await RuleServ.isValid(rules)
+    const isValidRules = await RuleServ.isValidConfig(rules)
     if (!isValidRules) {
         throw _.logicError('Cannot create campaign', 'Invalid rules format', 400, ERR.INVALID_RULES_FORMAT);
     }
 
     const rewards: any = req.body.rewards;
-    const isValidRewards = await RewardServ.isValid(rewards);
+    const isValidRewards = await RewardServ.isValidConfig(rewards);
     if (!isValidRewards) {
         throw _.logicError('Cannot create campaign', 'Invalid rewards format', 400, ERR.INVALID_REWARDS_FORMAT);
     }
 
     const campaign: ICampaign = {
+        user: req.session.user._id,
         name: req.body.name,
         charset: HC.HUMAN32_ALPHABET,
         pattern: req.body.pattern || HC.DEFAULT_PROMO_PATTERN,
@@ -64,7 +65,7 @@ router.post('/', _.validBody(addCampaignBody), _.routeAsync(async (req) => {
     const insertResult = await Campaign.insertOne(campaign);
     campaign._id = insertResult.insertedId;
 
-    await PromotionServ.generatePromotion(campaign, promotionCount);
+    await PromotionServ.generatePromotions(campaign, promotionCount);
 
     return HC.SUCCESS;
 }));

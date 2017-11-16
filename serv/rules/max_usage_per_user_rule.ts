@@ -1,5 +1,13 @@
 import _ from '../../utils/_';
-import { IPromotionRule, IPromotionContext } from './index'
+import ajv2 from '../../utils/ajv2';
+import { IPromotionRule, IPromotionContext } from './index';
+
+const _ajv = ajv2();
+const dataValidator = _ajv({
+    '+@user': {
+        '+@id': 'string'
+    }
+});
 
 export class PromotionContextMaxUsagePerUser implements IPromotionContext {
     constructor(data: any) {
@@ -13,13 +21,17 @@ export class MaxUsagePerUserRule implements IPromotionRule {
         return 'max_usage_per_user';
     }
 
-    async isValid(data: any): Promise<boolean> {
+    async isValidConfig(data: any): Promise<boolean> {
         const val = _.parseIntNull(data);
         if (val == null) {
             return false;
         }
 
         return 0 < val;
+    }
+    
+    async isValidData(data: any): Promise<boolean> {
+        return true && dataValidator(data);
     }
 
     async checkUsage(ctx: IPromotionContext): Promise<boolean> {

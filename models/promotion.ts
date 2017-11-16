@@ -7,7 +7,9 @@ import { IMongoModel, ObjectID } from './mongo-model';
 
 export interface IPromotion extends IMongoModel {
     campaign: ObjectID
+    user: ObjectID;
     code: string;
+    pattern: string;
     rules: any;
     rewards: any;
     metadata: any;
