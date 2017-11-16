@@ -42,7 +42,7 @@ router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authRole('US
         throw _.logicError('Cannot try promotion code', `Promotion ${code} not found`, 400, ERR.OBJECT_NOT_FOUND, code);
     }
 
-    let isDataValid = await RuleServ.isValidData(promotion.rules, transaction.data);
+    let isDataValid = await RuleServ.isValidTransactionData(promotion.rules, transaction.data);
     if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
@@ -91,7 +91,7 @@ router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authRo
         throw _.logicError('Cannot try promotion code', `Promotion ${code} not found`, 400, ERR.OBJECT_NOT_FOUND, code);
     }
 
-    let isDataValid = await RuleServ.isValidData(promotion.rules, transaction.data);
+    let isDataValid = await RuleServ.isValidTransactionData(promotion.rules, transaction.data);
     if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }

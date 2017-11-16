@@ -9,7 +9,7 @@ import _ from '../utils/_';
 import ajv2 from '../utils/ajv2';
 
 // Import models here
-import { Campaign, ICampaign, Promotion } from '../models';
+import { Campaign, ICampaign, Promotion, IRuleConfig, IRewardConfig } from '../models';
 
 // Import services here
 import AuthServ from '../serv/auth';
@@ -26,8 +26,22 @@ const addCampaignBody = _ajv({
     '+@promotionsCount': 'integer|>=1|<=100000',
     // '@charset': 'string',
     '@pattern': 'string',
-    '+@rules': {},
-    '+@rewards': {},
+    '+rules': {
+        type: 'array',
+        '@items': {
+            '+@type': 'string',
+            '+data': {},
+            '++': false
+        }
+    },
+    '+rewards': {
+        type: 'array',
+        '@items': {
+            '+@type': 'string',
+            '+data': {},
+            '++': false
+        }
+    },
     '@metadata': {},
     '++': false
 });
@@ -40,13 +54,13 @@ router.post('/', _.validBody(addCampaignBody), AuthServ.authRole('USER'), _.rout
         throw _.logicError('Cannot create campaign', 'Not enough random space to generate promotion code', 400, ERR.NOT_ENOUGH_CODE_SPACE);
     }
 
-    const rules: any = req.body.rules;
+    const rules: IRuleConfig[] = req.body.rules;
     const isValidRules = await RuleServ.isValidConfig(rules)
     if (!isValidRules) {
         throw _.logicError('Cannot create campaign', 'Invalid rules format', 400, ERR.INVALID_RULES_FORMAT);
     }
 
-    const rewards: any = req.body.rewards;
+    const rewards: IRewardConfig[] = req.body.rewards;
     const isValidRewards = await RewardServ.isValidConfig(rewards);
     if (!isValidRewards) {
         throw _.logicError('Cannot create campaign', 'Invalid rewards format', 400, ERR.INVALID_REWARDS_FORMAT);

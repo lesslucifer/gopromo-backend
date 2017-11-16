@@ -2,6 +2,7 @@ import _ from '../../utils/_';
 
 import { DiscountPercentReward } from './discount_percent';
 import { DiscountAmountReward } from './discount_amount';
+import { IRewardConfig } from '../../models/index';
 
 export interface IPromotionReward {
     key(): string;
@@ -14,18 +15,14 @@ export class PromotionRewards {
     static readonly REWARDS: IPromotionReward[] = [new DiscountPercentReward(), new DiscountAmountReward()];
     static readonly REWARD_REPOSITORY = _.keyBy(PromotionRewards.REWARDS, r => r.key());
 
-    static async isValidConfig(data: any): Promise<boolean> {
-        if (!_.isObject(data)) {
-            return false;
-        }
-
-        for (const key in data) {
-            const reward = this.REWARD_REPOSITORY[key];
+    static async isValidConfig(rewardConfigs: IRewardConfig[]): Promise<boolean> {
+        for (const rewardConfig of rewardConfigs) {
+            const reward = this.REWARD_REPOSITORY[rewardConfig.type];
             if (!reward) {
                 return false;
             }
 
-            const isValid = await reward.isValidConfig(data[key]);
+            const isValid = await reward.isValidConfig(rewardConfig.data);
             if (!isValid) {
                 return false;
             }
@@ -34,9 +31,9 @@ export class PromotionRewards {
         return true;
     }
     
-    static async isValidTransactionData(rewards: any, transactionData: any): Promise<boolean> {
-        for (const key in rewards) {
-            const reward = this.REWARD_REPOSITORY[key];
+    static async isValidTransactionData(rewards: IRewardConfig[], transactionData: any): Promise<boolean> {
+        for (const rewardConfig of rewards) {
+            const reward = this.REWARD_REPOSITORY[rewardConfig.type];
             if (!reward) {
                 return false;
             }
@@ -50,13 +47,13 @@ export class PromotionRewards {
         return true;
     }
     
-    static async applyPromotion(rewards: any, transactionData: any): Promise<any> {
+    static async applyPromotion(rewards: IRewardConfig[], transactionData: any): Promise<any> {
         let rewarded = _.cloneDeep(transactionData);
 
-        for (const key in rewards) {
-            const reward = this.REWARD_REPOSITORY[key];
+        for (const rewardConf of rewards) {
+            const reward = this.REWARD_REPOSITORY[rewardConf.type];
             if (reward) {
-                rewarded = await reward.applyPromotion(rewards[key], rewarded);
+                rewarded = await reward.applyPromotion(rewardConf.data, rewarded);
             }
         }
         

@@ -84,8 +84,7 @@ export class PromotionServ {
         const upsertData = _.merge({}, update, {
             $setOnInsert: {
                 promotion: _.mObjId(promotionId), 
-                token: token,
-                data: {}
+                token: token
             }
         });
         return await PromotionData.findOneAndUpdate({token: token}, upsertData, {upsert: true, returnOriginal: false});

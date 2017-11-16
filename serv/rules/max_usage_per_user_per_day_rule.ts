@@ -61,7 +61,7 @@ export class MaxUsagePerUserRule implements IPromotionRule {
         const dataKey = this.dataKey(ctx);
         const data = await PromotionData.findOne({token: token}, {fields: {[dataKey]: 1}});
         
-        const maxUse: number = ctx.config;
+        const maxUse: number = ctx.config.data;
 
         return (_.get(data, dataKey) || 0) < maxUse;
     }

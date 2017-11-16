@@ -2,7 +2,7 @@ import * as moment from 'moment';
 import _ from '../../utils/_';
 import { MaxUsagePerUserRule } from './max_usage_per_user_rule';
 import { MaxUsageRule } from './max_usage_rule';
-import { IPromotion, IPromoTransaction } from '../../models/index';
+import { IPromotion, IPromoTransaction, IRuleConfig } from '../../models/index';
 
 export interface IPromotionRule {
     key(): string;
@@ -14,7 +14,7 @@ export interface IPromotionRule {
 
 export interface IRedemptionContext {
     promotionId: string;
-    config: any;
+    config: IRuleConfig;
     transaction: IPromoTransaction
 }
 
@@ -22,18 +22,15 @@ export class PromotionRules {
     static readonly RULES: IPromotionRule[] = [new MaxUsagePerUserRule(), new MaxUsageRule()];
     static readonly RULE_REPOSITORY = _.keyBy(PromotionRules.RULES, r => r.key());
     
-    static async isValidConfig(data: any): Promise<boolean> {
-        if (!_.isObject(data)) {
-            return false;
-        }
+    static async isValidConfig(configs: IRuleConfig[]): Promise<boolean> {
 
-        for (const key in data) {
-            const rule = this.RULE_REPOSITORY[key];
+        for (const config of configs) {
+            const rule = this.RULE_REPOSITORY[config.type];
             if (!rule) {
                 return false;
             }
 
-            const isValid = await rule.isValidConfig(data[key]);
+            const isValid = await rule.isValidConfig(config.data);
             if (!isValid) {
                 return false;
             }
@@ -41,18 +38,14 @@ export class PromotionRules {
         return true;
     }
 
-    static async isValidData(rules: any, data: any): Promise<boolean> {
-        if (!_.isObject(data)) {
-            return false;
-        }
-
-        for (const key in rules) {
-            const rule = this.RULE_REPOSITORY[key];
+    static async isValidTransactionData(rules: IRuleConfig[], transactionData: any): Promise<boolean> {
+        for (const ruleConfig of rules) {
+            const rule = this.RULE_REPOSITORY[ruleConfig.type];
             if (!rule) {
                 return false;
             }
 
-            const isValid = await rule.isValidTransactionData(data);
+            const isValid = await rule.isValidTransactionData(transactionData);
             if (!isValid) {
                 return false;
             }
@@ -62,25 +55,28 @@ export class PromotionRules {
     }
     
     static async recordRedemption(promotion: IPromotion, transaction: IPromoTransaction): Promise<void> {
-        const rules = _.keys(promotion.rules).map(r => this.RULE_REPOSITORY[r]).filter(r => r != null);
-        await Promise.all(rules.map(r => r.recordRedemption({
+        const rules = promotion.rules.map(r => ({
+            rule: this.RULE_REPOSITORY[r.type],
+            config: r
+        })).filter(r => r.rule != null)
+
+        await Promise.all(rules.map(r => r.rule.recordRedemption({
             promotionId: `${promotion._id}`,
-            config: promotion.rules[r.key()],
+            config: r.config,
             transaction: transaction
         })));
     }
 
     static async isUsable(promotion: IPromotion, transaction: IPromoTransaction): Promise<boolean> {
-        for (const key in promotion.rules) {
-            const rule = this.RULE_REPOSITORY[key];
+        for (const ruleConfig of promotion.rules) {
+            const rule = this.RULE_REPOSITORY[ruleConfig.type];
             if (!rule) {
                 return false;
             }
             
-            const config = promotion.rules[key];
             const isUsable = await rule.isUsable({
                 promotionId: `${promotion._id}`,
-                config: promotion.rules[key],
+                config: ruleConfig,
                 transaction: transaction
             });
             

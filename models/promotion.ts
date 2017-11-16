@@ -4,6 +4,7 @@ import CONN from '../glob/conn';
 import _ from '../utils/_';
 
 import { IMongoModel, ObjectID } from './mongo-model';
+import { IRuleConfig, IRewardConfig } from './campaign';
 
 export interface IPromoTransaction {
     id: string;
@@ -16,8 +17,8 @@ export interface IPromotion extends IMongoModel {
     user: ObjectID;
     code: string;
     pattern: string;
-    rules: any;
-    rewards: any;
+    rules: IRuleConfig[];
+    rewards: IRewardConfig[];
     metadata: any;
 }
 
