@@ -1,23 +1,24 @@
 import * as moment from 'moment';
 import _ from '../../utils/_';
-import { IPromotionRule, IPromotionContext } from './index'
+import { IPromotionRule, IRedemptionContext } from './index'
 import { ajv2 } from '../../utils/ajv2';
-import { IPromotion, IPromotionData } from '../../models/index';
+import { IPromotion, IPromotionData, Promotion, PromotionData } from '../../models/index';
 import { PromotionServ } from '../promotion';
 import { HC } from '../../glob/hc';
 
 const _ajv = ajv2();
 
-export class PromotionContextMaxUsage implements IPromotionContext {
-    constructor(data: any) {
-        this.usage = data.usage;
-    }
-    usage: string;
-}
-
 export class MaxUsageRule implements IPromotionRule {
     key() {
         return 'max_usage';
+    }
+
+    genToken(ctx: IRedemptionContext) {
+        return PromotionServ.genDataToken(`${ctx.promotionId}`);
+    }
+
+    dataKey(ctx: IRedemptionContext) {
+        return `data.${this.key()}.n_use`;
     }
 
     async isValidConfig(data: any): Promise<boolean> {
@@ -33,19 +34,20 @@ export class MaxUsageRule implements IPromotionRule {
         return true;
     }
     
-    async recordRedemption(promotion: IPromotion, transactionData: any) {
-        const token = PromotionServ.genDataToken(`${promotion._id}`);
-        const dataKey = `data.${this.key()}.n_use`;
+    async recordRedemption(ctx: IRedemptionContext) {
+        const token = this.genToken(ctx);
+        const dataKey = this.dataKey(ctx);
 
-        await PromotionServ.updatePromotionData(promotion._id, token, {$inc: {key: 1}});
+        await PromotionServ.updatePromotionData(ctx.promotionId, token, {$inc: {[dataKey]: 1}});
     }
 
-    async checkUsage(ctx: PromotionContextMaxUsage): Promise<boolean> {
-        console.log(ctx.usage);
-        return true;
-    }
+    async isUsable(ctx: IRedemptionContext): Promise<boolean> {
+        const token = this.genToken(ctx);
+        const dataKey = this.dataKey(ctx);
+        const data = await PromotionData.findOne<IPromotionData>({token: token}, {fields: {[dataKey]: 1}});
 
-    async buildContext(data: any): Promise<IPromotionContext> {
-        return new PromotionContextMaxUsage(data);
+        const maxUse: number = ctx.config;
+        
+        return (_.get(data, dataKey) || 0) < maxUse;
     }
 }

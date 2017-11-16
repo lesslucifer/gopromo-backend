@@ -1,6 +1,6 @@
 import * as moment from 'moment';
 import _ from '../../utils/_';
-import { IPromotionRule, IPromotionContext } from './index'
+import { IPromotionRule, IRedemptionContext } from './index'
 import { ajv2 } from '../../utils/ajv2';
 import { IPromotion, PromotionData, Promotion } from '../../models/index';
 import { PromotionServ } from '../promotion';
@@ -19,16 +19,21 @@ interface ITransactionData {
     }
 }
 
-export class PromotionContextMaxUsagePerUser implements IPromotionContext {
-    constructor(data: any) {
-        this.userId = data.userId;
-    }
-    userId: string;
-}
-
 export class MaxUsagePerUserRule implements IPromotionRule {
     key() {
         return 'max_usage_per_user_per_day';
+    }
+
+    genToken(ctx: IRedemptionContext) {
+        const transactionData: ITransactionData = ctx.transaction.data;
+        const userIdHash = PromotionServ.genIdHash(transactionData.user.id);
+        const dateNum = moment(ctx.transaction.time).diff(HC.BEGIN_DATE, 'd');
+        const token = PromotionServ.genDataToken(`${ctx.promotionId}_${userIdHash}_${dateNum}`);
+        return token;
+    }
+
+    dataKey(ctx: IRedemptionContext) {
+        return `data.${this.key()}.${ctx.transaction.data.user.id}.n_use`;
     }
 
     async isValidConfig(data: any): Promise<boolean> {
@@ -44,21 +49,20 @@ export class MaxUsagePerUserRule implements IPromotionRule {
         return true && dataValidator(transactionData);
     }
 
-    async recordRedemption(promotion: IPromotion, transactionData: ITransactionData) {
-        const userIdHash = PromotionServ.genIdHash(transactionData.user.id);
-        const dateNum = moment().diff(HC.BEGIN_DATE, 'd');
-        const token = PromotionServ.genDataToken(`${promotion._id}_${userIdHash}_${dateNum}`);
-        const dataKey = `data.${this.key()}.${transactionData.user.id}.n_use`;
+    async recordRedemption(ctx: IRedemptionContext) {
+        const token = this.genToken(ctx);
+        const dataKey = this.dataKey(ctx);
 
-        await PromotionServ.updatePromotionData(promotion._id, token, {$inc: {key: 1}});
+        await PromotionServ.updatePromotionData(ctx.promotionId, token, {$inc: {[dataKey]: 1}});
     }
 
-    async checkUsage(ctx: IPromotionContext): Promise<boolean> {
-        console.log(ctx);
-        return true;
-    }
+    async isUsable(ctx: IRedemptionContext): Promise<boolean> {
+        const token = this.genToken(ctx);
+        const dataKey = this.dataKey(ctx);
+        const data = await PromotionData.findOne({token: token}, {fields: {[dataKey]: 1}});
+        
+        const maxUse: number = ctx.config;
 
-    async buildContext(data: any): Promise<IPromotionContext> {
-        return new PromotionContextMaxUsagePerUser(data);
+        return (_.get(data, dataKey) || 0) < maxUse;
     }
 }

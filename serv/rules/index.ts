@@ -1,19 +1,21 @@
+import * as moment from 'moment';
 import _ from '../../utils/_';
 import { MaxUsagePerUserRule } from './max_usage_per_user_rule';
 import { MaxUsageRule } from './max_usage_rule';
-import { IPromotion } from '../../models/index';
+import { IPromotion, IPromoTransaction } from '../../models/index';
 
 export interface IPromotionRule {
     key(): string;
     isValidConfig(data: any): Promise<boolean>;
     isValidTransactionData(transactionData: any): Promise<boolean>;
-    recordRedemption(promotion: IPromotion, transactionData: any): Promise<void>;
-    checkUsage(ctx: IPromotionContext): Promise<boolean>;
-    buildContext(data: any): Promise<IPromotionContext>;
+    isUsable(ctx: IRedemptionContext): Promise<boolean>;
+    recordRedemption(ctx: IRedemptionContext): Promise<void>;
 }
 
-export interface IPromotionContext {
-    
+export interface IRedemptionContext {
+    promotionId: string;
+    config: any;
+    transaction: IPromoTransaction
 }
 
 export class PromotionRules {
@@ -59,24 +61,30 @@ export class PromotionRules {
         return true;
     }
     
-    static async recordRedemption(promotion: IPromotion, transactionData: any): Promise<void> {
+    static async recordRedemption(promotion: IPromotion, transaction: IPromoTransaction): Promise<void> {
         const rules = _.keys(promotion.rules).map(r => this.RULE_REPOSITORY[r]).filter(r => r != null);
-        await Promise.all(rules.map(r => r.recordRedemption(promotion, transactionData)));
+        await Promise.all(rules.map(r => r.recordRedemption({
+            promotionId: `${promotion._id}`,
+            config: promotion.rules[r.key()],
+            transaction: transaction
+        })));
     }
 
-    static async checkUsage(data: any): Promise<boolean> {
-        if (!_.isObject(data)) {
-            return false;
-        }
-
-        for (const key in data) {
+    static async isUsable(promotion: IPromotion, transaction: IPromoTransaction): Promise<boolean> {
+        for (const key in promotion.rules) {
             const rule = this.RULE_REPOSITORY[key];
             if (!rule) {
                 return false;
             }
-            const context: IPromotionContext = await rule.buildContext(data[key]);
-            const checkUsage = await rule.checkUsage(context);
-            if (!checkUsage) {
+            
+            const config = promotion.rules[key];
+            const isUsable = await rule.isUsable({
+                promotionId: `${promotion._id}`,
+                config: promotion.rules[key],
+                transaction: transaction
+            });
+            
+            if (!isUsable) {
                 return false;
             }
         }

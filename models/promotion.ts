@@ -5,6 +5,12 @@ import _ from '../utils/_';
 
 import { IMongoModel, ObjectID } from './mongo-model';
 
+export interface IPromoTransaction {
+    id: string;
+    time: Date;
+    data: any;
+}
+
 export interface IPromotion extends IMongoModel {
     campaign: ObjectID;
     user: ObjectID;

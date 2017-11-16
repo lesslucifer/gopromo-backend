@@ -80,10 +80,10 @@ export class PromotionServ {
         return _.sha1(id);
     }
 
-    static async updatePromotionData(promotionId: ObjectID, token: string, update: any) {
+    static async updatePromotionData(promotionId: string, token: string, update: any) {
         const upsertData = _.merge({}, update, {
             $setOnInsert: {
-                promotion: promotionId, 
+                promotion: _.mObjId(promotionId), 
                 token: token,
                 data: {}
             }
