@@ -20,14 +20,14 @@ const _ajv = ajv2();
 
 // Start API here
 const loginBody = _ajv({
-    '+email': {type: 'string', pattern: _.emailRegexStr},
+    '+email': { type: 'string', pattern: _.emailRegexStr },
     '+@password': 'string|>=6'
 });
 router.post('/login', _.routeAsync(async (req) => {
     const email: string = req.body.email.toLowerCase();
     const password: string = req.body.password;
 
-   const user = await User.findOne<IUser>({email: email});
+    const user = await User.findOne<IUser>({ email: email });
 
     if (_.isEmpty(user)) {
         throw _.logicError('Invalid user', `User ${email} does not exist`, 400, ERR.INVALID_USERNAME_OR_PASSWORD, email);
@@ -39,7 +39,8 @@ router.post('/login', _.routeAsync(async (req) => {
 
     return {
         user: UserServ.info(user),
-        auth: await AuthServ.authKongToken(user, user.passwordSHA1)
+        auth: await AuthServ.authKongToken(user, user.passwordSHA1),
+        authID: user.auth.authID
     };
 }));
 
@@ -50,7 +51,7 @@ const issueTokenBody = _ajv({
 })
 router.post('/token', _.validBody(issueTokenBody), _.routeAsync(async (req) => {
     const userId = _.mObjId(req.body.userId);
-    const user = await User.findOne({_id: userId});
+    const user = await User.findOne({ _id: userId });
     if (_.isEmpty(user)) {
         throw _.logicError('Cannot get token', `User not found`, 400, ERR.OBJECT_NOT_FOUND, userId.toHexString());
     }
@@ -72,7 +73,7 @@ router.post('/token', _.validBody(issueTokenBody), _.routeAsync(async (req) => {
 const signUpBody = _ajv({
     '+@fullName': 'string',
     '+@email': 'string',
-    '+phone': {type: 'string', pattern: '^\\d{9,11}$'},
+    '+phone': { type: 'string', pattern: '^\\d{9,11}$' },
     '+@password': 'string|len>=6',
     '@company': 'string',
     '@companySize': 'integer|>=0',
@@ -81,19 +82,19 @@ const signUpBody = _ajv({
 router.post('/signup', _.validBody(signUpBody), _.routeAsync(async (req) => {
     const fullName: string = req.body.fullName;
     const email: string = req.body.email;
-    const phone: string = req.body.phoneNumber;    
+    const phone: string = req.body.phoneNumber;
     const password: string = req.body.password;
     const company: string = req.body.company || '';
     const companySize: number = req.body.companySize || 0;
 
-    const oldUser = await User.findOne({email: email}, {fields: {_id: 1}});
+    const oldUser = await User.findOne({ email: email }, { fields: { _id: 1 } });
 
     if (!_.isEmpty(oldUser)) {
         throw _.logicError('Cannot signup', `Login name ${email} is already registered`,
-        409, ERR.OBJECT_IS_ALREADY_EXIST, email);
+            409, ERR.OBJECT_IS_ALREADY_EXIST, email);
     }
 
-    const newUser: IUser = <IUser> {
+    const newUser: IUser = <IUser>{
         fullName: fullName,
         phone: phone,
         email: email,
@@ -107,7 +108,7 @@ router.post('/signup', _.validBody(signUpBody), _.routeAsync(async (req) => {
     await AuthServ.registerAuth(newUser);
     const result = await User.insertOne(newUser);
 
-    return {_id: result.insertedId};
+    return { _id: result.insertedId };
 }));
 
 export default router;
