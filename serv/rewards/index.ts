@@ -6,8 +6,8 @@ import { DiscountAmountReward } from './discount_amount';
 export interface IPromotionReward {
     key(): string;
     isValidConfig(data: any): Promise<boolean>;
-    isValidData(data: any): Promise<boolean>;
-    applyPromotion(config: any, data: any): Promise<any>;
+    isValidTransactionData(transactionData: any): Promise<boolean>;
+    applyPromotion(config: any, transactionData: any): Promise<any>;
 }
 
 export class PromotionRewards {
@@ -34,14 +34,14 @@ export class PromotionRewards {
         return true;
     }
     
-    static async isValidData(rewards: any, data: any): Promise<boolean> {
+    static async isValidTransactionData(rewards: any, transactionData: any): Promise<boolean> {
         for (const key in rewards) {
             const reward = this.REWARD_REPOSITORY[key];
             if (!reward) {
                 return false;
             }
 
-            const isValid = await reward.isValidData(data);
+            const isValid = await reward.isValidTransactionData(transactionData);
             if (!isValid) {
                 return false;
             }
@@ -50,8 +50,8 @@ export class PromotionRewards {
         return true;
     }
     
-    static async applyPromotion(rewards: any, data: any): Promise<any> {
-        let rewarded = _.cloneDeep(data);
+    static async applyPromotion(rewards: any, transactionData: any): Promise<any> {
+        let rewarded = _.cloneDeep(transactionData);
 
         for (const key in rewards) {
             const reward = this.REWARD_REPOSITORY[key];

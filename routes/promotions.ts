@@ -22,29 +22,29 @@ const _ajv = ajv2();
 
 // Start API here
 const tryPromotionBody = _ajv({
-    '@transaction_id': 'string',
-    '+@data': {}
+    '@transactionDd': 'string',
+    '+@transactionData': {}
 });
 router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const user = req.session.user;
     const code = req.params.code;
-    const transactionId: string = req.body.transaction_id;
+    const transactionId: string = req.body.transactionId;
     const userTime = moment(req.body.datetime);
     const time = userTime.isValid() ? userTime : moment();
 
-    const data: any = req.body.data;
+    const transactionData: any = req.body.transactionData;
 
     const promotion = await Promotion.findOne<IPromotion>({user: user._id, code: code});
     if (_.isEmpty(promotion)) {
         throw _.logicError('Cannot try promotion code', `Promotion ${code} not found`, 400, ERR.OBJECT_NOT_FOUND, code);
     }
 
-    let isDataValid = await RuleServ.isValidData(promotion.rules, data);
+    let isDataValid = await RuleServ.isValidData(promotion.rules, transactionData);
     if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
     
-    isDataValid = await RewardServ.isValidData(promotion.rewards, data);
+    isDataValid = await RewardServ.isValidData(promotion.rewards, transactionData);
     if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
@@ -52,12 +52,61 @@ router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authRole('US
     // valid promotion usage data
 
     // apply promotion
-    const rewarded = await RewardServ.applyPromotion(promotion.rewards, data);
+    const rewarded = await RewardServ.applyPromotion(promotion.rewards, transactionData);
     return {
         transaction_id: transactionId,
         code: code,
         time: time,
-        data: data,
+        data: transactionData,
+        rewarded: rewarded
+    }
+}));
+
+
+const redeemPromotionBody = _ajv({
+    '@transaction_id': 'string',
+    '+@data': {}
+});
+router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+    const user = req.session.user;
+    const code = req.params.code;
+    
+    const transactionId: string = req.body.transaction_id;
+    const userTime = moment(req.body.datetime);
+    const time = userTime.isValid() ? userTime : moment();
+
+    const transactionData: any = req.body.transactionData;
+
+    const promotion = await Promotion.findOne<IPromotion>({user: user._id, code: code});
+    if (_.isEmpty(promotion)) {
+        throw _.logicError('Cannot try promotion code', `Promotion ${code} not found`, 400, ERR.OBJECT_NOT_FOUND, code);
+    }
+
+    let isDataValid = await RuleServ.isValidData(promotion.rules, transactionData);
+    if (!isDataValid) {
+        throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
+    }
+    
+    isDataValid = await RewardServ.isValidData(promotion.rewards, transactionData);
+    if (!isDataValid) {
+        throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
+    }
+    
+    const rewarded = await RewardServ.applyPromotion(promotion.rewards, transactionData);
+
+    // race condition by user and code
+
+    // valid promotion usage data
+
+    // record the redemption
+    await RuleServ.recordRedemption(promotion, transactionData);
+
+    // do redeem
+    return {
+        transaction_id: transactionId,
+        code: code,
+        time: time,
+        data: transactionData,
         rewarded: rewarded
     }
 }));

@@ -1,6 +1,6 @@
 import _ from '../utils/_';
 
-import { ICampaign, IPromotion, Promotion, Campaign } from "../models";
+import { ICampaign, IPromotion, Promotion, Campaign, ObjectID, IPromotionData, PromotionData } from "../models";
 
 export class PromotionServ {
     static async generatePromotions(campaign: ICampaign, nPromotion: number) {
@@ -53,5 +53,41 @@ export class PromotionServ {
         const nOfRandChar = pattern.split('').filter(c => c == '#').length;
         const nAvailCode = Math.pow(charset.length, nOfRandChar);
         return acceptableProb * nAvailCode >= count;
+    }
+
+    static hashStr(s: string) {
+        let hash = 0, i, chr;
+        if (s.length === 0) return hash;
+        for (i = 0; i < s.length; i++) {
+            chr   = s.charCodeAt(i);
+            hash  = ((hash << 5) - hash) + chr;
+            hash |= 0; // Convert to 32bit integer
+        }
+
+        return hash;
+    }
+
+    static genIdHash(id: string, limit: number = 50000): number {
+        const n = _.parseIntNull(id);
+        if (n != null) {
+            return n / limit;
+        }
+
+        return this.hashStr(id) / limit;
+    }
+
+    static genDataToken(id: string): string {
+        return _.sha1(id);
+    }
+
+    static async updatePromotionData(promotionId: ObjectID, token: string, update: any) {
+        const upsertData = _.merge({}, update, {
+            $setOnInsert: {
+                promotion: promotionId, 
+                token: token,
+                data: {}
+            }
+        });
+        return await PromotionData.findOneAndUpdate({token: token}, upsertData, {upsert: true, returnOriginal: false});
     }
 }

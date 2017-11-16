@@ -1,6 +1,9 @@
+import * as moment from 'moment';
 import _ from '../../utils/_';
 import ajv2 from '../../utils/ajv2';
 import { IPromotionRule, IPromotionContext } from './index';
+import { IPromotion, IPromotionData } from '../../models/index';
+import { PromotionServ } from '../promotion';
 
 const _ajv = ajv2();
 const dataValidator = _ajv({
@@ -8,6 +11,12 @@ const dataValidator = _ajv({
         '+@id': 'string'
     }
 });
+
+interface ITransactionData {
+    user: {
+        id: string;
+    }
+}
 
 export class PromotionContextMaxUsagePerUser implements IPromotionContext {
     constructor(data: any) {
@@ -30,8 +39,16 @@ export class MaxUsagePerUserRule implements IPromotionRule {
         return 0 < val;
     }
     
-    async isValidData(data: any): Promise<boolean> {
-        return true && dataValidator(data);
+    async isValidTransactionData(transactionData: any): Promise<boolean> {
+        return true && dataValidator(transactionData);
+    }
+    
+    async recordRedemption(promotion: IPromotion, transactionData: ITransactionData) {
+        const userIdHash = PromotionServ.genIdHash(transactionData.user.id);
+        const token = PromotionServ.genDataToken(`${promotion._id}_${userIdHash}`);
+        const dataKey = `data.${this.key()}.${transactionData.user.id}.n_use`;
+
+        await PromotionServ.updatePromotionData(promotion._id, token, {$inc: {key: 1}});
     }
 
     async checkUsage(ctx: IPromotionContext): Promise<boolean> {

@@ -6,7 +6,7 @@ import _ from '../utils/_';
 import { IMongoModel, ObjectID } from './mongo-model';
 
 export interface IPromotion extends IMongoModel {
-    campaign: ObjectID
+    campaign: ObjectID;
     user: ObjectID;
     code: string;
     pattern: string;

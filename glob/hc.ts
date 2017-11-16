@@ -1,3 +1,4 @@
+import * as moment from 'moment';
 export class HC {
     static readonly SUCCESS = {success: true};
     static readonly MINUTES_PER_DAY = 24 * 60;
@@ -5,6 +6,7 @@ export class HC {
     static readonly DEFAULT_PROMO_COUNT = 100;
     static readonly HUMAN32_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
     static readonly DEFAULT_PROMO_PATTERN = '########';
+    static readonly BEGIN_DATE = moment('2010-01-01', 'YYYY-MM-DD');
 }
 
 export default HC;

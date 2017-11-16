@@ -33,14 +33,14 @@ export class DiscountPercentReward implements IPromotionReward {
         return true && configValidator(data);
     }
     
-    async isValidData(data: any): Promise<boolean> {
-        return true && dataValidator(data);
+    async isValidTransactionData(transactionData: any): Promise<boolean> {
+        return true && dataValidator(transactionData);
     }
     
-    async applyPromotion(config: DiscountConfig, data: any): Promise<any> {
-        const item: ItemData = data.item;
+    async applyPromotion(config: DiscountConfig, transactionData: any): Promise<any> {
+        const item: ItemData = transactionData.item;
         const discountAmount = Math.min(item.price * (config.percent / 100), config.max_amount);
         item.price = Math.max(0, item.price - discountAmount);
-        return data;
+        return transactionData;
     }
 }

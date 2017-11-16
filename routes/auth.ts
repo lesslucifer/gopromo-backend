@@ -45,11 +45,11 @@ router.post('/login', _.routeAsync(async (req) => {
 
 const issueTokenBody = _ajv({
     '+@refresh_token': 'string',
-    '+@user_id': 'string',
+    '+@userIdd': 'string',
     '++': false
 })
 router.post('/token', _.validBody(issueTokenBody), _.routeAsync(async (req) => {
-    const userId = _.mObjId(req.body.user_id);
+    const userId = _.mObjId(req.body.userId);
     const user = await User.findOne({_id: userId});
     if (_.isEmpty(user)) {
         throw _.logicError('Cannot get token', `User not found`, 400, ERR.OBJECT_NOT_FOUND, userId.toHexString());

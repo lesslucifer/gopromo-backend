@@ -4,7 +4,7 @@ import { ajv2 } from '../../utils/ajv2';
 
 const ajv = ajv2();
 
-const dataValidator = ajv({
+const transactionDataValidator = ajv({
     '+@item': {
         '+@price': 'number|>0'
     }
@@ -28,14 +28,14 @@ export class DiscountAmountReward implements IPromotionReward {
         return 0 < val;
     }
     
-    async isValidData(data: any): Promise<boolean> {
-        return true && dataValidator(data);
+    async isValidTransactionData(transactionData: any): Promise<boolean> {
+        return true && transactionDataValidator(transactionData);
     }
 
-    async applyPromotion(config: number, data: any): Promise<any> {
+    async applyPromotion(config: number, transactionData: any): Promise<any> {
         const discountAmount = config;
-        const item: ItemData = data.item;
+        const item: ItemData = transactionData.item;
         item.price = Math.max(0, item.price - discountAmount);
-        return data;
+        return transactionData;
     }
 }

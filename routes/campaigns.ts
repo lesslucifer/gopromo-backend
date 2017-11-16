@@ -23,7 +23,7 @@ const _ajv = ajv2();
 // Start API here
 const addCampaignBody = _ajv({
     '+@name': 'string',
-    '+@promotions_count': 'integer|>=1|<=100000',
+    '+@promotionsCount': 'integer|>=1|<=100000',
     // '@charset': 'string',
     '@pattern': 'string',
     '+@rules': {},
@@ -32,7 +32,7 @@ const addCampaignBody = _ajv({
     '++': false
 });
 router.post('/', _.validBody(addCampaignBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
-    const promotionCount: number = _.parseIntNull(req.body.promotions_count) || HC.DEFAULT_PROMO_COUNT;
+    const promotionCount: number = _.parseIntNull(req.body.promotionsCount) || HC.DEFAULT_PROMO_COUNT;
 
     const pattern = req.body.pattern || HC.DEFAULT_PROMO_PATTERN;
     const charset = HC.HUMAN32_ALPHABET;
