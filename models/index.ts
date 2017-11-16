@@ -16,8 +16,8 @@ export function init(db: mongodb.Db) {
     initIndexes();
 }
 
-function initIndexes() {
-    Promotion.createIndex({code: 'hashed'});
-    Promotion.createIndex({user: 1, code: 1}, {unique: true});
-    Promotion.createIndex({user: 1, pattern: 1}, {unique: true});
+async function initIndexes() {
+    await Promotion.createIndex({code: 'hashed'});
+    await Promotion.createIndex({user: 1, code: 1}, {unique: true});
+    await Promotion.createIndex({user: 1, pattern: 1});
 }

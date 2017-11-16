@@ -12,7 +12,8 @@ import * as MODELS from './models';
 import SessionServ from './serv/sess';
 
 // Import routers
-import CampaignRoute from './routes/campaign';
+import CampaignRoute from './routes/campaigns';
+import PromotionRoute from './routes/promotions';
 import AuthRoute from './routes/auth';
 
 class Program {
@@ -50,6 +51,7 @@ class Program {
         // Configure routes
         server.use('/auth', AuthRoute);
         server.use('/campaigns', CampaignRoute);
+        server.use('/promotions', PromotionRoute);
 
         // Start server
         server.listen(ENV.HTTP_PORT, function () {

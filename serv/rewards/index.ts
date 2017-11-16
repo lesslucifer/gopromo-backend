@@ -35,10 +35,6 @@ export class PromotionRewards {
     }
     
     static async isValidData(rewards: any, data: any): Promise<boolean> {
-        if (!_.isObject(data)) {
-            return false;
-        }
-
         for (const key in rewards) {
             const reward = this.REWARD_REPOSITORY[key];
             if (!reward) {
@@ -52,6 +48,19 @@ export class PromotionRewards {
         }
         
         return true;
+    }
+    
+    static async applyPromotion(rewards: any, data: any): Promise<any> {
+        let rewarded = _.cloneDeep(data);
+
+        for (const key in rewards) {
+            const reward = this.REWARD_REPOSITORY[key];
+            if (reward) {
+                rewarded = await reward.applyPromotion(rewards[key], rewarded);
+            }
+        }
+        
+        return rewarded;
     }
 }
 

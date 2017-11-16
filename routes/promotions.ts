@@ -22,13 +22,13 @@ const _ajv = ajv2();
 
 // Start API here
 const tryPromotionBody = _ajv({
-    '@custom_id': 'string',
+    '@transaction_id': 'string',
     '+@data': {}
 });
-router.post(':code/tries', _.validBody(tryPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const user = req.session.user;
     const code = req.params.code;
-    const customId: string = req.body.custom_id;
+    const transactionId: string = req.body.transaction_id;
     const userTime = moment(req.body.datetime);
     const time = userTime.isValid() ? userTime : moment();
 
@@ -39,19 +39,27 @@ router.post(':code/tries', _.validBody(tryPromotionBody), AuthServ.authRole('USE
         throw _.logicError('Cannot try promotion code', `Promotion ${code} not found`, 400, ERR.OBJECT_NOT_FOUND, code);
     }
 
-    if (!RuleServ.isValidData(promotion.rules, data)) {
+    let isDataValid = await RuleServ.isValidData(promotion.rules, data);
+    if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
     
-    if (!RewardServ.isValidData(promotion.rewards, data)) {
+    isDataValid = await RewardServ.isValidData(promotion.rewards, data);
+    if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
     
     // valid promotion usage data
 
     // apply promotion
-
-    return true;
+    const rewarded = await RewardServ.applyPromotion(promotion.rewards, data);
+    return {
+        transaction_id: transactionId,
+        code: code,
+        time: time,
+        data: data,
+        rewarded: rewarded
+    }
 }));
 
 export default router;

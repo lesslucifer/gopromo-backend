@@ -4,6 +4,7 @@ import * as request from 'request-promise';
 import _ from '../utils/_';
 import ERR from '../glob/err';
 import ENV from '../glob/env';
+import * as CF from '../glob/cf';
 
 import UserServ from './user';
 import { IUser } from '../models';
@@ -79,7 +80,7 @@ export class AuthServ {
     
     static async registerAuth(user: IUser) {
         user.auth = <any> {};
-        user.auth.authID = `STR@${_.randomstring.generate({length: 16})}`;
+        user.auth.authID = `${CF.APP_CODE}@${_.randomstring.generate({length: 16})}`;
 
         const kongId = await this.createKongConsumer(user.auth.authID);
         user.auth.kongID = kongId;
