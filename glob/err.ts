@@ -8,6 +8,7 @@ export const ERR = {
     INVALID_VERSION: -6,
     OBJECT_IS_ALREADY_EXIST: -7,
     DATA_MISMATCH: -8,
+    INVALID_APIKEY: -9,
     
     // Login (-101 -> -199)
     INVALID_USERNAME_OR_PASSWORD: -101,

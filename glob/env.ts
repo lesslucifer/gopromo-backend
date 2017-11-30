@@ -20,5 +20,5 @@ export interface ENV_CONFIG {
     KONG: ENV_KONG_CONFIG;
 }
 
-export const ENV: ENV_CONFIG = require(process.env.config || '../env.templ.json');
+export const ENV: ENV_CONFIG = require(process.env.config || '../env.json');
 export default ENV;
