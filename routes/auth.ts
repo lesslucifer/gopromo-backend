@@ -39,8 +39,7 @@ router.post('/login', _.routeAsync(async (req) => {
 
     return {
         user: UserServ.info(user),
-        auth: await AuthServ.authKongToken(user, user.passwordSHA1),
-        authID: user.auth.authID
+        auth: await AuthServ.authKongToken(user, user.passwordSHA1)
     };
 }));
 
