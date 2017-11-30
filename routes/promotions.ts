@@ -16,6 +16,7 @@ import AuthServ from '../serv/auth';
 import RuleServ from '../serv/rules';
 import RewardServ from '../serv/rewards';
 import { PromotionServ } from '../serv/promotion';
+import { ObjectID } from 'bson';
 
 const router = express.Router();
 const _ajv = ajv2();
@@ -46,12 +47,12 @@ router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authRole('US
     if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
-    
+
     isDataValid = await RewardServ.isValidTransactionData(promotion.rewards, transaction.data);
     if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
-    
+
     // valid promotion usage data
     const isUsable = await RuleServ.isUsable(promotion, transaction);
     if (!isUsable) {
@@ -75,7 +76,7 @@ const redeemPromotionBody = _ajv({
 router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const user = req.session.user;
     const code = req.params.code;
-    
+
     const userTime = moment(req.body.datetime);
     const time = userTime.isValid() ? userTime : moment();
 
@@ -95,12 +96,12 @@ router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authRo
     if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
-    
+
     isDataValid = await RewardServ.isValidTransactionData(promotion.rewards, transaction.data);
     if (!isDataValid) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
-    
+
     const rewarded = await RewardServ.applyPromotion(promotion.rewards, transaction.data);
 
     // TODO: race condition by user and code
@@ -125,8 +126,23 @@ router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authRo
     const result = await Redemption.insertOne(redemption);
 
     redemption._id = result.insertedId;
-    
+
     return redemption;
+}));
+
+const queries = _ajv({
+    '@campaign_id': 'string',
+    '++': false
+});
+router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+    let campaginId: ObjectID;
+    try {
+        campaginId = _.mObjId(req.query.campaign_id);
+    } catch (err) {
+
+    }
+    const promotions = await Promotion.find({ campaign: campaginId }).toArray();
+    return promotions;
 }));
 
 export default router;

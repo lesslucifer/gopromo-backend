@@ -84,4 +84,11 @@ router.post('/', _.validBody(addCampaignBody), AuthServ.authRole('USER'), _.rout
     return HC.SUCCESS;
 }));
 
+router.get('/', AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+    const campaigns = await Campaign.find<ICampaign>({}).toArray();
+
+    return campaigns;
+}));
+
+
 export default router;
