@@ -9,11 +9,12 @@ import _ from '../utils/_';
 import ajv2 from '../utils/ajv2';
 
 // Import models here
-import { User, IUserInfo, IUser } from '../models';
+import { User, IUserInfo, IUser, PromoApp } from '../models';
 
 // Import services here
 import AuthServ from '../serv/auth';
 import { UserServ } from '../serv/user';
+import { IPromoApp } from '../models/promo_app';
 
 const router = express.Router();
 const _ajv = ajv2();
@@ -106,6 +107,14 @@ router.post('/signup', _.validBody(signUpBody), _.routeAsync(async (req) => {
 
     await AuthServ.registerAuth(newUser);
     const result = await User.insertOne(newUser);
+
+    // create default app
+    const promoApp: IPromoApp = {
+        user: result.insertedId,
+        appName: HC.DEFAULT_APP_NAME,
+        apiKey: _.randomstring.generate({length: 32})
+    }
+    PromoApp.insert(promoApp);
 
     return { _id: result.insertedId };
 }));
