@@ -15,6 +15,7 @@ import SessionServ from './serv/sess';
 import CampaignRoute from './routes/campaigns';
 import PromotionRoute from './routes/promotions';
 import AuthRoute from './routes/auth';
+import PromoAppRoute from './routes/apps';
 
 class Program {
     public static async main(): Promise<number> {
@@ -52,6 +53,7 @@ class Program {
         server.use('/auth', AuthRoute);
         server.use('/campaigns', CampaignRoute);
         server.use('/promotions', PromotionRoute);
+        server.use('/apps', PromoAppRoute);
 
         // Start server
         server.listen(ENV.HTTP_PORT, function () {

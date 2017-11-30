@@ -26,7 +26,7 @@ const tryPromotionBody = _ajv({
     '+@transactionData': {},
     '+@apiKey': 'string'
 });
-router.post('/:code/tries', _.validBody(tryPromotionBody), _.routeAsync(async (req) => {
+router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authPromoApp(), _.routeAsync(async (req) => {
     const user = req.session.user;
     const code = req.params.code;
     const userTime = moment(req.body.datetime);
@@ -74,7 +74,7 @@ const redeemPromotionBody = _ajv({
     '+@transactionData': {},
     '+@apiKey': 'string'
 });
-router.post('/:code/redemptions', _.validBody(tryPromotionBody), _.routeAsync(async (req) => {
+router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authPromoApp(), _.routeAsync(async (req) => {
     const user = req.session.user;
     const code = req.params.code;
     

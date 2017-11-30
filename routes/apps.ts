@@ -44,3 +44,5 @@ router.post('/', _.validBody(addAppBody), AuthServ.authRole('USER'), _.routeAsyn
 
     return app;
 }));
+
+export default router;
