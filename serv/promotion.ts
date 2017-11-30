@@ -1,6 +1,6 @@
 import _ from '../utils/_';
 
-import { ICampaign, IPromotion, Promotion, Campaign, ObjectID, IPromotionData, PromotionData } from "../models";
+import { ICampaign, IPromotion, Promotion, Campaign, ObjectID, IPromotionData, PromotionData, PROMOTION_STATUS, PROMOTION_STATUSES } from "../models";
 
 export class PromotionServ {
     static async generatePromotions(campaign: ICampaign, nPromotion: number) {
@@ -19,7 +19,11 @@ export class PromotionServ {
             pattern: campaign.pattern,
             rules: campaign.rules,
             rewards: campaign.rewards,
-            metadata: campaign.metadata
+            metadata: campaign.metadata,
+            created_at: _.nowInSeconds(),
+            start_at: campaign.start_at,
+            expired_at: campaign.expired_at,
+            status: PROMOTION_STATUSES.ENABLED
         }));
 
         return await Promotion.insertMany(promotions);

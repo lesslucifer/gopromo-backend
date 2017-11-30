@@ -43,6 +43,8 @@ const addCampaignBody = _ajv({
         }
     },
     '@metadata': {},
+    '+@start_at': 'integer|>0',
+    '+@expired_at': 'integer|>0',
     '++': false
 });
 router.post('/', _.validBody(addCampaignBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
@@ -66,6 +68,13 @@ router.post('/', _.validBody(addCampaignBody), AuthServ.authRole('USER'), _.rout
         throw _.logicError('Cannot create campaign', 'Invalid rewards format', 400, ERR.INVALID_REWARDS_FORMAT);
     }
 
+    const startAt: number = req.body.start_at;
+    const expiredAt: number = req.body.expired_at;
+
+    if (expiredAt < startAt) {
+        throw _.logicError('Cannot create campaign', 'Invalid time', 400, ERR.DATA_MISMATCH);
+    }
+
     const campaign: ICampaign = {
         user: req.session.user._id,
         name: req.body.name,
@@ -73,13 +82,59 @@ router.post('/', _.validBody(addCampaignBody), AuthServ.authRole('USER'), _.rout
         pattern: req.body.pattern || HC.DEFAULT_PROMO_PATTERN,
         rules: rules,
         rewards: rewards,
-        metadata: {}
+        metadata: {},
+        created_at: _.nowInSeconds(),
+        start_at: req.body.start_at,
+        expired_at: req.body.expired_at
     }
 
     const insertResult = await Campaign.insertOne(campaign);
     campaign._id = insertResult.insertedId;
 
     await PromotionServ.generatePromotions(campaign, promotionCount);
+
+    return HC.SUCCESS;
+}));
+
+const editCampaignBody = _ajv({
+    '@start_at': 'integer|>0',
+    '@expired_at': 'integer|>0',
+    '++': false
+})
+router.put('/:id', AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+    const campaignId = _.mObjId(req.params.id);
+    const campaign = await Campaign.findOne({_id: campaignId, user: req.session.user._id});
+
+    if (_.isEmpty(campaign)) {
+        throw _.logicError('Cannot edit campaign', `Campaign not found`, 400, ERR.OBJECT_NOT_FOUND);
+    }
+
+    const update: any = {};
+    if (req.body.start_at != null) {
+        update.start_at = req.body.start_at;
+    }
+
+    if (req.body.expired_at != null) {
+        update.expired_at = req.body.expired_at;
+    }
+
+    if (_.isEmpty(update)) {
+        return HC.SUCCESS;
+    }
+
+    const startAt = update.start_at || campaign.start_at;
+    const expiredAt = update.expired_at || campaign.expired_at;
+    if (expiredAt < startAt) {
+        throw _.logicError('Cannot create campaign', 'Invalid time', 400, ERR.DATA_MISMATCH);
+    }
+    
+    const result = await Campaign.update({_id: campaignId}, update);
+
+    // update for promotion if invole to time
+    const promotionUpdate = _.filterDict(update, (k, v) => k == 'expired_at' || k == 'start_at');
+    if (!_.isEmpty(promotionUpdate)) {
+        await Promotion.updateMany({campaign: campaignId}, promotionUpdate);
+    }
 
     return HC.SUCCESS;
 }));

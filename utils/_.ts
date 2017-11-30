@@ -4,6 +4,7 @@ import * as ajv from 'ajv';
 import * as bodyParser from 'body-parser';
 import * as express from 'express'
 import * as randomstring from 'randomstring';
+import { Dictionary } from 'lodash';
 const sprintf = require('sprintf-js').sprintf;
 const sha1 = require('sha1');
 
@@ -405,6 +406,14 @@ class Utils {
     
     mObjId(id: string) {
         return new mongodb.ObjectID(id);
+    }
+
+    nowInSeconds(since: number = 0) {
+        return ((new Date().valueOf() - since) / 1000) | 0;
+    }
+
+    filterDict<T>(dict: Dictionary<T>, predicate: (k: string | number, v: T) => boolean = (k,v) => true) {
+        return _.arrToObj(_.keys(dict).filter(k => predicate(k, dict[k])), k => k, k => dict[k]);
     }
 };
 

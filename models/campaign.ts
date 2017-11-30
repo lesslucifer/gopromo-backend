@@ -23,4 +23,7 @@ export interface ICampaign extends IMongoModel {
     rules: IRuleConfig[];
     rewards: IRewardConfig[];
     metadata: any;
+    created_at: number;
+    start_at: number;
+    expired_at: number;
 }
