@@ -9,7 +9,7 @@ import _ from '../utils/_';
 import ajv2 from '../utils/ajv2';
 
 // Import models here
-import { Campaign, ICampaign, Promotion, IPromotion, IPromoTransaction, IRedemption, Redemption } from '../models';
+import { Campaign, ICampaign, Promotion, IPromotion, IPromoTransaction, IRedemption, Redemption, PROMOTION_STATUSES, PROMOTION_STATUS } from '../models';
 
 // Import services here
 import AuthServ from '../serv/auth';
@@ -130,6 +130,26 @@ router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authPr
     redemption._id = result.insertedId;
 
     return redemption;
+}));
+
+const updatePromotionStatusParams = _ajv({
+    '+status': {enum: _.values(PROMOTION_STATUSES)}
+})
+router.put('/:id/status/:status', _.validParams(updatePromotionStatusParams), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+    const status: PROMOTION_STATUS = req.params.status;
+    const promotionId = _.mObjId(req.params.id);
+
+    const promotion = await Promotion.findOne({_id: promotionId, user: req.session.user._id}, {fields: {status: 1}});
+    
+    if (_.isEmpty(promotion)) {
+        throw _.logicError('Cannot try promotion code', `Promotion not found`, 400, ERR.OBJECT_NOT_FOUND);
+    }
+
+    if (promotion.status != status) {
+        await Promotion.updateOne({_id: promotionId}, {status: status});
+    }
+
+    return HC.SUCCESS;
 }));
 
 const queries = _ajv({

@@ -148,6 +148,18 @@ class Utils {
         }
     }
 
+    validParams(validator: ajv.ValidateFunction): express.RequestHandler {
+        return (req: express.Request, resp: express.Response, next: express.NextFunction) => {
+            if (!validator(req.params)) {
+                resp.statusCode = 400;
+                resp.send({err: validator.errors});
+                return;
+            }
+
+            next();
+        }
+    }
+
     requireQueries(...query: string[]): express.RequestHandler {
         return (req: express.Request, resp: express.Response, next: express.NextFunction) => {
             for (const q of query) {
