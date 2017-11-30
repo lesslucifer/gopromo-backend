@@ -1,5 +1,5 @@
 import _ from '../utils/_';
-import { IUser, IUserInfo, User } from '../models';
+import { IUser, IUserInfo, User, ObjectID } from '../models';
 
 export class UserServ {
     static get InfoKeys() {
@@ -31,6 +31,10 @@ export class UserServ {
 
     static info(user: IUser): IUserInfo {
         return <IUserInfo> _.pick(user, this.InfoKeys);
+    }
+
+    static getUserInfo(userId: ObjectID) {
+        return User.findOne({_id: userId}, {fields: this.InfoSelect});
     }
 }
 
