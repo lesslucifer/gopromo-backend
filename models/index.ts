@@ -1,4 +1,10 @@
 import * as mongodb from 'mongodb';
+import { ICampaign } from './campaign';
+import { IPromotion } from './promotion';
+import { IUser } from './user';
+import { IPromotionData } from './promotion_data';
+import { IRedemption } from './redemption';
+import { IPromoApp } from './app';
 
 export * from './mongo-model';
 export * from './campaign';
@@ -7,11 +13,12 @@ export * from './user';
 export * from './promotion_data';
 export * from './redemption';
 
-export let Campaign: mongodb.Collection;
-export let Promotion: mongodb.Collection;
-export let User: mongodb.Collection;
-export let PromotionData: mongodb.Collection;
-export let Redemption: mongodb.Collection;
+export let Campaign: mongodb.Collection<ICampaign>;
+export let Promotion: mongodb.Collection<IPromotion>;
+export let User: mongodb.Collection<IUser>;
+export let PromotionData: mongodb.Collection<IPromotionData>;
+export let Redemption: mongodb.Collection<IRedemption>;
+export let PromoApp: mongodb.Collection<IPromoApp>;
 
 export function init(db: mongodb.Db) {
     Campaign = db.collection('campaign');
@@ -19,6 +26,7 @@ export function init(db: mongodb.Db) {
     User = db.collection('user');
     PromotionData = db.collection('promotion_data');
     Redemption = db.collection('redemption');
+    PromoApp = db.collection('app');
 
     initIndexes();
 }
@@ -32,4 +40,7 @@ async function initIndexes() {
 
     await Redemption.createIndex({promotion: 1, time: -1});
     await Redemption.createIndex({token: 'hashed'});
+
+    await PromoApp.createIndex({user: 1, appName: 1});
+    await PromoApp.createIndex({apiKey: 1}, {unique: true});
 }
