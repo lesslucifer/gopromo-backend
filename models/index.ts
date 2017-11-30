@@ -4,7 +4,7 @@ import { IPromotion } from './promotion';
 import { IUser } from './user';
 import { IPromotionData } from './promotion_data';
 import { IRedemption } from './redemption';
-import { IPromoApp } from './app';
+import { IPromoApp } from './promo_app';
 
 export * from './mongo-model';
 export * from './campaign';

@@ -23,9 +23,10 @@ const _ajv = ajv2();
 // Start API here
 const tryPromotionBody = _ajv({
     '@transactionId': 'string',
-    '+@transactionData': {}
+    '+@transactionData': {},
+    '+@apiKey': 'string'
 });
-router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+router.post('/:code/tries', _.validBody(tryPromotionBody), _.routeAsync(async (req) => {
     const user = req.session.user;
     const code = req.params.code;
     const userTime = moment(req.body.datetime);
@@ -70,9 +71,10 @@ router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authRole('US
 
 const redeemPromotionBody = _ajv({
     '@transactionId': 'string',
-    '+@transactionData': {}
+    '+@transactionData': {},
+    '+@apiKey': 'string'
 });
-router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+router.post('/:code/redemptions', _.validBody(tryPromotionBody), _.routeAsync(async (req) => {
     const user = req.session.user;
     const code = req.params.code;
     

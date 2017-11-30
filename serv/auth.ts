@@ -7,7 +7,8 @@ import ENV from '../glob/env';
 import * as CF from '../glob/cf';
 
 import UserServ from './user';
-import { IUser } from '../models';
+import { IUser, PromoApp, User } from '../models';
+import { IPromoApp } from '../models/promo_app';
 
 export interface IAuthServConfig {
     UsernameField: string;
@@ -177,6 +178,23 @@ export class AuthServ {
         });
 
         return data;
+    }
+
+    static authPromoApp() {
+        return _.routeNextableAsync(async (req, resp, next) => {
+            const apiKey = req.body.apiKey || '';
+            const promoApp = await PromoApp.findOne({apiKey: apiKey});
+            
+            if (_.isEmpty(promoApp)) {
+                throw _.logicError('Permission denied', 'Invalid APIKey', 403, ERR.INVALID_APIKEY);
+            }
+
+            req.session.promoApp = promoApp;
+            
+            const user = await UserServ.getUserInfo(promoApp.user);
+            req.session.user = user;
+            next();
+        });
     }
 }
 

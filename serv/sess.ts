@@ -1,8 +1,10 @@
 import * as express from 'express';
 
 import { IUserInfo } from '../models';
+import { IPromoApp } from '../models/promo_app';
 
 interface IReqSession {
+    promoApp?: IPromoApp;
     user?: IUserInfo
 }
 
