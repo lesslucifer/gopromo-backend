@@ -167,7 +167,7 @@ router.put('/:id/status/:status', _.validParams(updatePromotionStatusParams), Au
     }
 
     if (promotion.status != status) {
-        await Promotion.updateOne({_id: promotionId}, {status: status});
+        await Promotion.updateOne({_id: promotionId}, {$set: {status: status}});
     }
 
     return HC.SUCCESS;

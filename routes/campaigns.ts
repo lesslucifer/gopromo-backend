@@ -128,12 +128,12 @@ router.put('/:id', AuthServ.authRole('USER'), _.routeAsync(async (req) => {
         throw _.logicError('Cannot create campaign', 'Invalid time', 400, ERR.DATA_MISMATCH);
     }
     
-    const result = await Campaign.update({_id: campaignId}, update);
+    const result = await Campaign.update({_id: campaignId}, {$set: update});
 
     // update for promotion if invole to time
     const promotionUpdate = _.filterDict(update, (k, v) => k == 'expired_at' || k == 'start_at');
     if (!_.isEmpty(promotionUpdate)) {
-        await Promotion.updateMany({campaign: campaignId}, promotionUpdate);
+        await Promotion.updateMany({campaign: campaignId}, {$set: promotionUpdate});
     }
 
     return HC.SUCCESS;
