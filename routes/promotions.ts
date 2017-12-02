@@ -188,4 +188,15 @@ router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(a
     return promotions;
 }));
 
+router.get('/:promotionId', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+    let promotionId: ObjectID;
+    try {
+        promotionId = _.mObjId(req.params.promotionId);
+    } catch (err) {
+
+    }
+    const promotion = await Promotion.findOne({ _id: promotionId });
+    return promotion;
+}));
+
 export default router;
