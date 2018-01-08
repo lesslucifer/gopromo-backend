@@ -23,9 +23,16 @@ const _ajv = ajv2();
 
 // Start API here
 const tryPromotionBody = _ajv({
-    '@transactionId': 'string',
-    '+@transactionData': {},
-    '+@apiKey': 'string'
+    '+transactions': {
+        'type': 'array',
+        '@items': {
+            '@transactionId': 'string',
+            '+@transactionData': {},
+            '++': false
+        },
+        'minItem': 1
+    },
+    '+@apiKey': 'string'    
 });
 router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authPromoApp(), _.routeAsync(async (req) => {
     const user = req.session.user;
@@ -49,34 +56,39 @@ router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authPromoApp
         throw _.logicError('Cannot try promotion code', `Promotion is expired`, 400, ERR.PROMOTION_CODE_IS_EXPIRED)        
     }
     
-    const transaction: IPromoTransaction = {
-        id: req.body.transactionId,
+    const transactionData: any[] = req.body.transactions;
+    const transactions: IPromoTransaction[] = transactionData.map(trD => ({
+        id: trD.transactionId || _.uniqueId(),
         time: moment.unix(time).toDate(),
-        data: req.body.transactionData
-    }
+        data: trD.transactionData
+    }));
 
-    let isDataValid = await RuleServ.isValidTransactionData(promotion.rules, transaction.data);
-    if (!isDataValid) {
+    let dataValid = await Promise.all(transactions.map(tr => RuleServ.isValidTransactionData(promotion.rules, tr.data)));
+    if (dataValid.some(v => !v)) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
 
-    isDataValid = await RewardServ.isValidTransactionData(promotion.rewards, transaction.data);
-    if (!isDataValid) {
+    dataValid = await Promise.all(transactions.map(tr => RewardServ.isValidTransactionData(promotion.rewards, tr.data)));
+    if (dataValid.some(v => !v)) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
 
     // valid promotion usage data
-    const isUsable = await RuleServ.isUsable(promotion, transaction);
-    if (!isUsable) {
+    const useableResult = await RuleServ.isUsable(promotion, transactions);
+    if (!useableResult.some(u => u.isUsable)) {
         throw _.logicError('Cannot try promotion code', `Promotion code is not available`, 400, ERR.PROMOTION_CODE_IS_UNUSABLE)
     }
 
     // apply promotion
-    const rewarded = await RewardServ.applyPromotion(promotion.rewards, transaction.data);
+    const usableTransactions = useableResult.filter(ur => ur.isUsable).map(ur => ur.transaction);
+    const rewarded = await Promise.all(usableTransactions.map(tr => RewardServ.applyPromotion(promotion.rewards, tr.data)));
     return {
         promotion: promotion,
-        transaction: transaction,
-        rewarded: rewarded
+        transactions: useableResult.map(ur => ({
+            isUsable: ur.isUsable,
+            transaction: ur.transaction,
+            rewarded: ur.isUsable ? rewarded[usableTransactions.findIndex(tr => tr.id == ur.transaction.id)] : ur.transaction.data
+        }))
     }
 }));
 
@@ -93,7 +105,7 @@ router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authPr
 
 
     const transaction: IPromoTransaction = {
-        id: req.body.transactionId,
+        id: req.body.transactionId || _.uniqueId(),
         time: moment.unix(time).toDate(),
         data: req.body.transactionData
     }
@@ -130,7 +142,7 @@ router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authPr
     // TODO: race condition by user and code
 
     // valid promotion usage data
-    const isUsable = await RuleServ.isUsable(promotion, transaction);
+    const isUsable = await RuleServ.isUsableOne(promotion, transaction);
     if (!isUsable) {
         throw _.logicError('Cannot redeem promotion code', `Promotion code is not available`, 400, ERR.PROMOTION_CODE_IS_UNUSABLE)
     }

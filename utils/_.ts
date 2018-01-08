@@ -316,9 +316,9 @@ class Utils {
         return new Date(miliSecsInt);
     };
 
-    arrToObj<T, V>(arr: T[], keyMap: (t: T) => string, valMap: (t: T) => V): {[k: string]: V} {
-        return arr.reduce((ret, t) => {
-            ret[keyMap(t)] = valMap(t);
+    arrToObj<T, V>(arr: T[], keyMap: (t: T, idx?: number) => string, valMap: (t: T, idx?: number) => V): {[k: string]: V} {
+        return arr.reduce((ret, t, i) => {
+            ret[keyMap(t, i)] = valMap(t, i);
             return ret;
         }, <any> {});
     }

@@ -1,8 +1,8 @@
 import * as moment from 'moment';
 import _ from '../../utils/_';
-import { IPromotionRule, IRedemptionContext } from './index'
+import { IPromotionRule, IRedemptionContext, IRedemptionBatchContext } from './index'
 import { ajv2 } from '../../utils/ajv2';
-import { IPromotion, IPromotionData, Promotion, PromotionData } from '../../models/index';
+import { IPromotion, IPromotionData, Promotion, PromotionData, IPromoTransaction } from '../../models/index';
 import { PromotionServ } from '../promotion';
 import { HC } from '../../glob/hc';
 
@@ -17,7 +17,7 @@ export class MaxUsageRule implements IPromotionRule {
         return PromotionServ.genDataToken(`${ctx.promotionId}`);
     }
 
-    dataKey(ctx: IRedemptionContext) {
+    get dataKey() {
         return `data.${this.key()}.n_use`;
     }
 
@@ -36,18 +36,26 @@ export class MaxUsageRule implements IPromotionRule {
     
     async recordRedemption(ctx: IRedemptionContext) {
         const token = this.genToken(ctx);
-        const dataKey = this.dataKey(ctx);
+        const dataKey = this.dataKey;
 
         await PromotionServ.updatePromotionData(ctx.promotionId, token, {$inc: {[dataKey]: 1}});
     }
 
-    async isUsable(ctx: IRedemptionContext): Promise<boolean> {
-        const token = this.genToken(ctx);
-        const dataKey = this.dataKey(ctx);
-        const data = await PromotionData.findOne<IPromotionData>({token: token}, {fields: {[dataKey]: 1}});
+    async isUsable(ctx: IRedemptionBatchContext): Promise<{[trId: string]: boolean}> {
+        const tokens = ctx.transactions.map((tr, i) => ({
+            token: this.genToken(PromotionServ.getSingleCtx(ctx, i)),
+            transaction: tr
+        }));
+        
+        const promoDataArr = await PromotionData.find({token: _.uniq(tokens.map(tk => tk.token))}, {fields: {[this.dataKey]: 1}}).toArray();
+        const promoData = _.keyBy(promoDataArr, d => d.token);
 
         const maxUse: number = ctx.config.data;
-        
-        return (_.get(data, dataKey) || 0) < maxUse;
+        const result = _.arrToObj(tokens, tk => tk.transaction.id, (tk, i) => {
+            const data = promoData[tk.token];
+            return (_.get(data, this.dataKey) || 0) + i < maxUse;
+        });
+
+        return result;
     }
 }

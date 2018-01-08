@@ -1,6 +1,7 @@
 import _ from '../utils/_';
 
 import { ICampaign, IPromotion, Promotion, Campaign, ObjectID, IPromotionData, PromotionData, PROMOTION_STATUS, PROMOTION_STATUSES } from "../models";
+import { IRedemptionBatchContext, IRedemptionContext } from './rules/index';
 
 export class PromotionServ {
     static async generatePromotions(campaign: ICampaign, nPromotion: number) {
@@ -92,5 +93,13 @@ export class PromotionServ {
             }
         });
         return await PromotionData.findOneAndUpdate({token: token}, upsertData, {upsert: true, returnOriginal: false});
+    }
+
+    static getSingleCtx(ctx: IRedemptionBatchContext, index: number): IRedemptionContext {
+        return {
+            promotionId: ctx.promotionId,
+            config: ctx.config,
+            transaction: ctx.transactions[index]
+        }
     }
 }

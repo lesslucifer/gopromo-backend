@@ -8,7 +8,7 @@ export interface IPromotionRule {
     key(): string;
     isValidConfig(data: any): Promise<boolean>;
     isValidTransactionData(transactionData: any): Promise<boolean>;
-    isUsable(ctx: IRedemptionContext): Promise<boolean>;
+    isUsable(ctxs: IRedemptionBatchContext): Promise<{[trId: string]: boolean}>;
     recordRedemption(ctx: IRedemptionContext): Promise<void>;
 }
 
@@ -16,6 +16,12 @@ export interface IRedemptionContext {
     promotionId: string;
     config: IRuleConfig;
     transaction: IPromoTransaction
+}
+
+export interface IRedemptionBatchContext {
+    promotionId: string;
+    config: IRuleConfig;
+    transactions: IPromoTransaction[]
 }
 
 export class PromotionRules {
@@ -67,24 +73,33 @@ export class PromotionRules {
         })));
     }
 
-    static async isUsable(promotion: IPromotion, transaction: IPromoTransaction): Promise<boolean> {
+    static async isUsable(promotion: IPromotion, transactions: IPromoTransaction[]): Promise<{transaction: IPromoTransaction, isUsable: boolean}[]> {
+        const result = transactions.map(tr => ({
+            transaction: tr,
+            isUsable: true
+        }));
+
         for (const ruleConfig of promotion.rules) {
             const rule = this.RULE_REPOSITORY[ruleConfig.type];
             if (!rule) {
-                return false;
+                result.forEach(r => r.isUsable = false);
+                return result;
             }
             
-            const isUsable = await rule.isUsable({
+            const usableResult = await rule.isUsable({
                 promotionId: `${promotion._id}`,
                 config: ruleConfig,
-                transaction: transaction
+                transactions: transactions
             });
             
-            if (!isUsable) {
-                return false;
-            }
+            result.forEach(r => r.isUsable = r.isUsable && usableResult[r.transaction.id]);
         }
-        return true;
+
+        return result;
+    }
+
+    static isUsableOne(promotion: IPromotion, transaction: IPromoTransaction) {
+        return this.isUsable(promotion, [transaction]).then(r => _.first(r).isUsable);
     }
 }
 
