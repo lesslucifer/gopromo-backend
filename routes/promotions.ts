@@ -92,7 +92,6 @@ router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authPromoApp
     }
 }));
 
-
 const redeemPromotionBody = _ajv({
     '@transactionId': 'string',
     '+@transactionData': {},
@@ -102,7 +101,6 @@ router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authPr
     const user = req.session.user;
     const code = req.params.code;
     const time = moment.unix(req.body.datetime).unix() || _.nowInSeconds();
-
 
     const transaction: IPromoTransaction = {
         id: req.body.transactionId || _.uniqueId(),
@@ -165,6 +163,55 @@ router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authPr
     return redemption;
 }));
 
+const updateRedemptionBody = _ajv({
+    '@transactionId': 'string',
+    '+@transactionData': {},
+    '+@apiKey': 'string'
+});
+router.put('/redemptions/:redemption_id', _.validBody(tryPromotionBody), AuthServ.authPromoApp(), _.routeAsync(async (req) => {
+    const user = req.session.user;
+    const redemptionId = _.mObjId(req.params.redemption_id);
+    const time = moment.unix(req.body.datetime).unix() || _.nowInSeconds();
+
+    const transaction: IPromoTransaction = {
+        id: req.body.transactionId || _.uniqueId(),
+        time: moment.unix(time).toDate(),
+        data: req.body.transactionData
+    }
+
+    const redemption = await Redemption.findOne({_id: redemptionId});
+    if (_.isEmpty(redemption)) {
+        throw _.logicError('Cannot update redemption', `Redemption ${redemptionId} not found`, 400, ERR.OBJECT_NOT_FOUND, redemptionId);        
+    }
+
+    const promotion = await Promotion.findOne<IPromotion>({_id: redemption.promotion});
+    if (_.isEmpty(promotion) || !promotion.user.equals(user._id)) {
+        throw _.logicError('Cannot update redemption', `Permision denied`, 400, ERR.OBJECT_NOT_FOUND);
+    }
+
+    let isDataValid = await RuleServ.isValidTransactionData(promotion.rules, transaction.data);
+    if (!isDataValid) {
+        throw _.logicError('Cannot update redemption', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
+    }
+
+    isDataValid = await RewardServ.isValidTransactionData(promotion.rewards, transaction.data);
+    if (!isDataValid) {
+        throw _.logicError('Cannot update redemption', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
+    }
+
+    const rewarded = await RewardServ.applyPromotion(promotion.rewards, transaction.data);
+
+    redemption.transaction = transaction;
+    redemption.rewarded = rewarded;
+    
+    await Redemption.findOneAndUpdate({_id: redemptionId}, {$set: {
+        transaction: transaction,
+        rewarded: rewarded
+    }});
+
+    return redemption;
+}));
+
 const updatePromotionStatusParams = _ajv({
     '+status': {enum: _.values(PROMOTION_STATUSES)}
 })
@@ -190,23 +237,14 @@ const queries = _ajv({
     '++': false
 });
 router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
-    let campaginId: ObjectID;
-    try {
-        campaginId = _.mObjId(req.query.campaign_id);
-    } catch (err) {
-
-    }
-    const promotions = await Promotion.find({ campaign: campaginId }).toArray();
+    let campaignId: ObjectID = _.mObjId(req.query.campaign_id);
+    const promotions = await Promotion.find({ campaign: campaignId }).toArray();
     return promotions;
 }));
 
 router.get('/:promotionId', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
-    let promotionId: ObjectID;
-    try {
-        promotionId = _.mObjId(req.params.promotionId);
-    } catch (err) {
+    let promotionId = _.mObjId(req.params.promotionId);
 
-    }
     const promotion = await Promotion.findOne({ _id: promotionId });
     return promotion;
 }));
