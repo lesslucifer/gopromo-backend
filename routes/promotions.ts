@@ -97,7 +97,7 @@ const redeemPromotionBody = _ajv({
     '+@transactionData': {},
     '+@apiKey': 'string'
 });
-router.post('/:code/redemptions', _.validBody(tryPromotionBody), AuthServ.authPromoApp(), _.routeAsync(async (req) => {
+router.post('/:code/redemptions', _.validBody(redeemPromotionBody), AuthServ.authPromoApp(), _.routeAsync(async (req) => {
     const user = req.session.user;
     const code = req.params.code;
     const time = moment.unix(req.body.datetime).unix() || _.nowInSeconds();
@@ -168,7 +168,7 @@ const updateRedemptionBody = _ajv({
     '+@transactionData': {},
     '+@apiKey': 'string'
 });
-router.put('/redemptions/:redemption_id', _.validBody(tryPromotionBody), AuthServ.authPromoApp(), _.routeAsync(async (req) => {
+router.put('/redemptions/:redemption_id', _.validBody(updateRedemptionBody), AuthServ.authPromoApp(), _.routeAsync(async (req) => {
     const user = req.session.user;
     const redemptionId = _.mObjId(req.params.redemption_id);
     const time = moment.unix(req.body.datetime).unix() || _.nowInSeconds();
@@ -181,7 +181,7 @@ router.put('/redemptions/:redemption_id', _.validBody(tryPromotionBody), AuthSer
 
     const redemption = await Redemption.findOne({_id: redemptionId});
     if (_.isEmpty(redemption)) {
-        throw _.logicError('Cannot update redemption', `Redemption ${redemptionId} not found`, 400, ERR.OBJECT_NOT_FOUND, redemptionId);        
+        throw _.logicError('Cannot update redemption', `Redemption ${redemptionId} not found`, 400, ERR.OBJECT_NOT_FOUND, redemptionId.toHexString());        
     }
 
     const promotion = await Promotion.findOne<IPromotion>({_id: redemption.promotion});
