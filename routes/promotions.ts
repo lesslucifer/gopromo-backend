@@ -23,10 +23,10 @@ const _ajv = ajv2();
 
 // Start API here
 router.get('/:codes', AuthServ.authPromoApp(), _.routeAsync(async (req) => {
-    const codes: string[] = req.params.code.split(',');
+    const codes: string[] = req.params.codes.split(',');
     const user = req.session.user;
 
-    const promotions = await Promotion.find({user: user._id, code: {$in: codes}}).toArray();
+    const promotions = await Promotion.find({ user: user._id, code: { $in: codes } }).toArray();
     return promotions;
 }));
 
@@ -40,14 +40,14 @@ const tryPromotionBody = _ajv({
         },
         'minItem': 1
     },
-    '+@apiKey': 'string'    
+    '+@apiKey': 'string'
 });
 router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authPromoApp(), _.routeAsync(async (req) => {
     const user = req.session.user;
     const code = req.params.code;
     const time = moment.unix(req.body.datetime).unix() || _.nowInSeconds();
 
-    const promotion = await Promotion.findOne<IPromotion>({user: user._id, code: code});
+    const promotion = await Promotion.findOne<IPromotion>({ user: user._id, code: code });
     if (_.isEmpty(promotion)) {
         throw _.logicError('Cannot try promotion code', `Promotion ${code} not found`, 400, ERR.OBJECT_NOT_FOUND, code);
     }
@@ -57,13 +57,13 @@ router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authPromoApp
     }
 
     if (time < promotion.start_at) {
-        throw _.logicError('Cannot try promotion code', `Promotion does not start yet`, 400, ERR.PROMOTION_CODE_DOES_NOT_START_YET)        
+        throw _.logicError('Cannot try promotion code', `Promotion does not start yet`, 400, ERR.PROMOTION_CODE_DOES_NOT_START_YET)
     }
 
     if (time >= promotion.expired_at) {
-        throw _.logicError('Cannot try promotion code', `Promotion is expired`, 400, ERR.PROMOTION_CODE_IS_EXPIRED)        
+        throw _.logicError('Cannot try promotion code', `Promotion is expired`, 400, ERR.PROMOTION_CODE_IS_EXPIRED)
     }
-    
+
     const transactionData: any[] = req.body.transactions;
     const transactions: IPromoTransaction[] = transactionData.map(trD => ({
         id: trD.transactionId || _.uniqueId(),
@@ -116,7 +116,7 @@ router.post('/:code/redemptions', _.validBody(redeemPromotionBody), AuthServ.aut
         data: req.body.transactionData
     }
 
-    const promotion = await Promotion.findOne<IPromotion>({user: user._id, code: code});
+    const promotion = await Promotion.findOne<IPromotion>({ user: user._id, code: code });
     if (_.isEmpty(promotion)) {
         throw _.logicError('Cannot redeem promotion code', `Promotion ${code} not found`, 400, ERR.OBJECT_NOT_FOUND, code);
     }
@@ -126,11 +126,11 @@ router.post('/:code/redemptions', _.validBody(redeemPromotionBody), AuthServ.aut
     }
 
     if (time < promotion.start_at) {
-        throw _.logicError('Cannot redeem promotion code', `Promotion does not start yet`, 400, ERR.PROMOTION_CODE_DOES_NOT_START_YET)        
+        throw _.logicError('Cannot redeem promotion code', `Promotion does not start yet`, 400, ERR.PROMOTION_CODE_DOES_NOT_START_YET)
     }
 
     if (time >= promotion.expired_at) {
-        throw _.logicError('Cannot redeem promotion code', `Promotion is expired`, 400, ERR.PROMOTION_CODE_IS_EXPIRED)        
+        throw _.logicError('Cannot redeem promotion code', `Promotion is expired`, 400, ERR.PROMOTION_CODE_IS_EXPIRED)
     }
 
     let isDataValid = await RuleServ.isValidTransactionData(promotion.rules, transaction.data);
@@ -187,12 +187,12 @@ router.put('/redemptions/:redemption_id', _.validBody(updateRedemptionBody), Aut
         data: req.body.transactionData
     }
 
-    const redemption = await Redemption.findOne({_id: redemptionId});
+    const redemption = await Redemption.findOne({ _id: redemptionId });
     if (_.isEmpty(redemption)) {
-        throw _.logicError('Cannot update redemption', `Redemption ${redemptionId} not found`, 400, ERR.OBJECT_NOT_FOUND, redemptionId.toHexString());        
+        throw _.logicError('Cannot update redemption', `Redemption ${redemptionId} not found`, 400, ERR.OBJECT_NOT_FOUND, redemptionId.toHexString());
     }
 
-    const promotion = await Promotion.findOne<IPromotion>({_id: redemption.promotion});
+    const promotion = await Promotion.findOne<IPromotion>({ _id: redemption.promotion });
     if (_.isEmpty(promotion) || !promotion.user.equals(user._id)) {
         throw _.logicError('Cannot update redemption', `Permision denied`, 400, ERR.OBJECT_NOT_FOUND);
     }
@@ -211,30 +211,32 @@ router.put('/redemptions/:redemption_id', _.validBody(updateRedemptionBody), Aut
 
     redemption.transaction = transaction;
     redemption.rewarded = rewarded;
-    
-    await Redemption.findOneAndUpdate({_id: redemptionId}, {$set: {
-        transaction: transaction,
-        rewarded: rewarded
-    }});
+
+    await Redemption.findOneAndUpdate({ _id: redemptionId }, {
+        $set: {
+            transaction: transaction,
+            rewarded: rewarded
+        }
+    });
 
     return redemption;
 }));
 
 const updatePromotionStatusParams = _ajv({
-    '+status': {enum: _.values(PROMOTION_STATUSES)}
+    '+status': { enum: _.values(PROMOTION_STATUSES) }
 })
 router.put('/:id/status/:status', _.validParams(updatePromotionStatusParams), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const status: PROMOTION_STATUS = req.params.status;
     const promotionId = _.mObjId(req.params.id);
 
-    const promotion = await Promotion.findOne({_id: promotionId, user: req.session.user._id}, {fields: {status: 1}});
-    
+    const promotion = await Promotion.findOne({ _id: promotionId, user: req.session.user._id }, { fields: { status: 1 } });
+
     if (_.isEmpty(promotion)) {
         throw _.logicError('Cannot try promotion code', `Promotion not found`, 400, ERR.OBJECT_NOT_FOUND);
     }
 
     if (promotion.status != status) {
-        await Promotion.updateOne({_id: promotionId}, {$set: {status: status}});
+        await Promotion.updateOne({ _id: promotionId }, { $set: { status: status } });
     }
 
     return HC.SUCCESS;
