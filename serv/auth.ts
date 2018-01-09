@@ -182,7 +182,7 @@ export class AuthServ {
 
     static authPromoApp() {
         return _.routeNextableAsync(async (req, resp, next) => {
-            const apiKey = req.body.apiKey || '';
+            const apiKey = req.body.apiKey || req.header('apikey') || '';
             const promoApp = await PromoApp.findOne({apiKey: apiKey});
             
             if (_.isEmpty(promoApp)) {
