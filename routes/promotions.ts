@@ -25,7 +25,8 @@ const _ajv = ajv2();
 router.get('/:codes', AuthServ.authPromoApp(), _.routeAsync(async (req) => {
     const codes: string[] = req.params.codes.split(',');
     const user = req.session.user;
-
+    console.log(codes);
+    console.log(user);
     const promotions = await Promotion.find({ user: user._id, code: { $in: codes } }).toArray();
     return promotions;
 }));
