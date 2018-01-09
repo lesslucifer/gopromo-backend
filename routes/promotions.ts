@@ -22,6 +22,14 @@ const router = express.Router();
 const _ajv = ajv2();
 
 // Start API here
+router.get('/:codes', AuthServ.authPromoApp(), _.routeAsync(async (req) => {
+    const codes: string[] = req.params.code.split(',');
+    const user = req.session.user;
+
+    const promotions = await Promotion.find({user: user._id, code: {$in: codes}}).toArray();
+    return promotions;
+}));
+
 const tryPromotionBody = _ajv({
     '+transactions': {
         'type': 'array',
