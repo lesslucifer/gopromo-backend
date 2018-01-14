@@ -1,5 +1,6 @@
 import * as express from 'express';
 import * as moment from 'moment';
+import * as uuid from 'uuid';
 
 import * as C from '../glob/cf';
 import HC from '../glob/hc';
@@ -66,7 +67,7 @@ router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authPromoApp
     
     const transactionData: any[] = req.body.transactions;
     const transactions: IPromoTransaction[] = transactionData.map(trD => ({
-        id: trD.transactionId || _.uniqueId(),
+        id: trD.transactionId || uuid.v4(),
         time: moment.unix(time).toDate(),
         data: trD.transactionData
     }));
@@ -111,7 +112,7 @@ router.post('/:code/redemptions', _.validBody(redeemPromotionBody), AuthServ.aut
     const time = moment.unix(req.body.datetime).unix() || _.nowInSeconds();
 
     const transaction: IPromoTransaction = {
-        id: req.body.transactionId || _.uniqueId(),
+        id: req.body.transactionId || uuid.v4(),
         time: moment.unix(time).toDate(),
         data: req.body.transactionData
     }
@@ -182,7 +183,7 @@ router.put('/redemptions/:redemption_id', _.validBody(updateRedemptionBody), Aut
     const time = moment.unix(req.body.datetime).unix() || _.nowInSeconds();
 
     const transaction: IPromoTransaction = {
-        id: req.body.transactionId || _.uniqueId(),
+        id: req.body.transactionId || uuid.v4(),
         time: moment.unix(time).toDate(),
         data: req.body.transactionData
     }
