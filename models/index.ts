@@ -37,9 +37,10 @@ async function initIndexes() {
     await Promotion.createIndex({ user: 1, pattern: 1 });
 
     await PromotionData.createIndex({ promotion: 1 });
+    await PromotionData.createIndex({ token: 'hashed' });
 
     await Redemption.createIndex({ promotion: 1, time: -1 });
-    await Redemption.createIndex({ token: 'hashed' });
+
 
     await PromoApp.createIndex({ user: 1, appName: 1 });
     await PromoApp.createIndex({ apiKey: 1 }, { unique: true });
