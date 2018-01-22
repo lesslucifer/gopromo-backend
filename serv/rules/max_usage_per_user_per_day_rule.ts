@@ -37,6 +37,7 @@ export class MaxUsagePerUserRule implements IPromotionRule {
     }
 
     async isValidConfig(data: any): Promise<boolean> {
+        console.log('$$$$$$$$$$$$$$$$$$$$$');
         console.log(data);
         const val = _.parseIntNull(data);
         if (val == null) {
