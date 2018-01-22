@@ -19,7 +19,7 @@ interface ITransactionData {
     }
 }
 
-export class MaxUsagePerUserRule implements IPromotionRule {
+export class MaxUsagePerUserPerDayRule implements IPromotionRule {
     key() {
         return 'max_usage_per_user_per_day';
     }
