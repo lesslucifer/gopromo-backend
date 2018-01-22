@@ -253,11 +253,12 @@ router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(a
     return promotions;
 }));
 
-router.get('/:promotionId', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
-    let promotionId = _.mObjId(req.params.promotionId);
-
-    const promotion = await Promotion.findOne({ _id: promotionId });
-    return promotion;
+router.get('/:promotionIds/promotionIds', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+    const promotionIds: string[] = req.params.promotionIds.split(',');
+    const listIdObj = promotionIds.map(id => _.mObjId(id));
+    console.log(promotionIds);
+    const promotions = await Promotion.find({ _id: listIdObj }).toArray();
+    return promotions;
 }));
 
 export default router;
