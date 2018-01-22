@@ -73,6 +73,8 @@ router.post('/:code/tries', _.validBody(tryPromotionBody), AuthServ.authPromoApp
     }));
 
     let dataValid = await Promise.all(transactions.map(tr => RuleServ.isValidTransactionData(promotion.rules, tr.data)));
+    console.log('..............');
+    console.log(dataValid);
     if (dataValid.some(v => !v)) {
         throw _.logicError('Cannot try promotion code', `Transaction data mismatch`, 400, ERR.TRANSACTION_DATA_MISMATCH);
     }
