@@ -258,8 +258,8 @@ router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(a
 router.get('/:promotionIds/promotionIds', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const promotionIds: string[] = req.params.promotionIds.split(',');
     const listIdObj = promotionIds.map(id => _.mObjId(id));
-    console.log(promotionIds);
-    const promotions = await Promotion.find({ _id: listIdObj }).toArray();
+    console.log(listIdObj);
+    const promotions = await Promotion.find({ _id: { $in: listIdObj } }).toArray();
     return promotions;
 }));
 
