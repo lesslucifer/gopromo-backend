@@ -15,15 +15,15 @@ export interface IPromoTransaction {
 
 export type PROMOTION_STATUS = 'ENABLED' | 'DISABLED';
 export const PROMOTION_STATUSES = {
-    ENABLED: <PROMOTION_STATUS> 'ENABLED',
-    DISABLED: <PROMOTION_STATUS> 'DISABLED'
+    ENABLED: <PROMOTION_STATUS>'ENABLED',
+    DISABLED: <PROMOTION_STATUS>'DISABLED'
 }
 
 export interface IPromotion extends IMongoModel {
-    campaign: ObjectID;
+    campaign?: ObjectID;
     user: ObjectID;
     code: string;
-    pattern: string;
+    pattern?: string;
     rules: IRuleConfig[];
     rewards: IRewardConfig[];
     metadata: any;

@@ -9,7 +9,7 @@ import _ from '../utils/_';
 import ajv2 from '../utils/ajv2';
 
 // Import models here
-import { Campaign, ICampaign, Promotion, IPromotion, IPromoTransaction, IRedemption, Redemption, PROMOTION_STATUSES, PROMOTION_STATUS } from '../models';
+import { Campaign, ICampaign, Promotion, IPromotion, IPromoTransaction, IRedemption, Redemption, PROMOTION_STATUSES, PROMOTION_STATUS, IRuleConfig, IRewardConfig } from '../models';
 
 // Import services here
 import AuthServ from '../serv/auth';
@@ -263,4 +263,72 @@ router.get('/:promotionIds/promotionIds', _.validQuery(queries), AuthServ.authRo
     return promotions;
 }));
 
+const addPromotionBody = _ajv({
+    '+@code': 'string',
+    '+rules': {
+        type: 'array',
+        '@items': {
+            '+@type': 'string',
+            '+data': {},
+            '++': false
+        }
+    },
+    '+rewards': {
+        type: 'array',
+        '@items': {
+            '+@type': 'string',
+            '+data': {},
+            '++': false
+        }
+    },
+    '@metadata': {},
+    '+@start_at': 'integer|>0',
+    '+@expired_at': 'integer|>0',
+    '++': false
+});
+router.post('/', _.validBody(addPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+    const code: string = req.body.code;
+    const codeUsed: IPromotion = await Promotion.findOne<IPromotion>({ code: code, user: req.session.user._id });
+    if (_.isEmpty(code) || codeUsed.code == code) {
+        throw _.logicError('Cannot create promotion', 'Code is duplicate', 400, ERR.PROMOTION_CODE_IS_DUPLICATE);
+    }
+
+    const rules: IRuleConfig[] = req.body.rules;
+    const isValidRules = await RuleServ.isValidConfig(rules)
+    if (!isValidRules) {
+        throw _.logicError('Cannot create promotion', 'Invalid rules format', 400, ERR.INVALID_RULES_FORMAT);
+    }
+
+    const rewards: IRewardConfig[] = req.body.rewards;
+    const isValidRewards = await RewardServ.isValidConfig(rewards);
+    if (!isValidRewards) {
+        throw _.logicError('Cannot create promotion', 'Invalid rewards format', 400, ERR.INVALID_REWARDS_FORMAT);
+    }
+
+    const startAt: number = req.body.start_at;
+    const expiredAt: number = req.body.expired_at;
+    const metadata = {};
+
+    if (expiredAt < startAt) {
+        throw _.logicError('Cannot create promotion', 'Invalid time', 400, ERR.DATA_MISMATCH);
+    }
+
+    const promotion: IPromotion = {
+        user: req.session.user._id,
+        code: code,
+        rules: rules,
+        rewards: rewards,
+        metadata: metadata,
+        created_at: _.nowInSeconds(),
+        start_at: req.body.start_at,
+        expired_at: req.body.expired_at,
+        status: PROMOTION_STATUSES.ENABLED
+    };
+    const insertResult = await Promotion.insertOne(promotion);
+    promotion._id = insertResult.insertedId;
+
+    return {
+        promotionId: promotion._id
+    };
+}));
 export default router;
