@@ -246,11 +246,20 @@ router.put('/:id/status/:status', _.validParams(updatePromotionStatusParams), Au
 }));
 
 const queries = _ajv({
-    '@campaign_id': 'string',
+    '@limit': 'string',
+    '@offset': 'string',
     '++': false
 });
 router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
-    let campaignId: ObjectID = _.mObjId(req.query.campaign_id);
+    const limit = _.parseIntNull(req.query.limit) || 50;
+    const offset = _.parseIntNull(req.query.offset) || Number.MAX_SAFE_INTEGER;
+
+    const promotions = await Promotion.find({ limit: limit, offset: offset }).toArray();
+    return promotions;
+}));
+
+router.get('/campaign/:campaignId', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
+    let campaignId: ObjectID = _.mObjId(req.params.campaignId);
     const promotions = await Promotion.find({ campaign: campaignId }).toArray();
     return promotions;
 }));
@@ -288,7 +297,7 @@ const addPromotionBody = _ajv({
 });
 router.post('/', _.validBody(addPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const code: string = req.body.code;
-    const codeUsed: IPromotion = await Promotion.findOne<IPromotion>({ code: code, user: req.session.user._id });
+    const codeUsed: IPromotion = await Promotion.findOne<IPromotion>({ code: code, user: req.session.user._id, status: PROMOTION_STATUSES.ENABLED });
     console.log(codeUsed);
     if (!_.isEmpty(codeUsed) && codeUsed.code == code) {
         throw _.logicError('Cannot create promotion', 'Code is duplicate', 400, ERR.PROMOTION_CODE_IS_DUPLICATE);
