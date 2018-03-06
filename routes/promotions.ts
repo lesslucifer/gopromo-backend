@@ -253,8 +253,9 @@ const queries = _ajv({
 router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const limit = _.parseIntNull(req.query.limit) || 50;
     const offset = _.parseIntNull(req.query.offset) || Number.MAX_SAFE_INTEGER;
-
-    const promotions = await Promotion.find<IPromotion>({ status: PROMOTION_STATUSES.ENABLED }, {}, offset, limit).toArray();
+    console.log(limit);
+    console.log(offset);
+    const promotions = await Promotion.find<IPromotion>().skip(offset).limit(limit).toArray();
     return promotions;
 }));
 
