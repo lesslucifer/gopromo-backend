@@ -247,15 +247,15 @@ router.put('/:id/status/:status', _.validParams(updatePromotionStatusParams), Au
 
 const queries = _ajv({
     '@limit': 'string',
-    '@offset': 'string',
+    '@skip': 'string',
     '++': false
 });
 router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const limit = _.parseIntNull(req.query.limit) || 50;
-    const offset = _.parseIntNull(req.query.offset) || Number.MAX_SAFE_INTEGER;
+    const skip = _.parseIntNull(req.query.skip) || Number.MIN_SAFE_INTEGER;
     console.log(limit);
-    console.log(offset);
-    const promotions = await Promotion.find<IPromotion>().skip(offset).limit(limit).toArray();
+    console.log(skip);
+    const promotions = await Promotion.find<IPromotion>().skip(skip).limit(limit).toArray();
     return promotions;
 }));
 
