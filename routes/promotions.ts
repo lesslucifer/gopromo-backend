@@ -246,8 +246,8 @@ router.put('/:id/status/:status', _.validParams(updatePromotionStatusParams), Au
 }));
 
 const queries = _ajv({
-    '@limit': 'number',
-    '@offset': 'number',
+    '@limit': 'string',
+    '@offset': 'string',
     '++': false
 });
 router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
