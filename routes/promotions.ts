@@ -289,7 +289,7 @@ const addPromotionBody = _ajv({
 router.post('/', _.validBody(addPromotionBody), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const code: string = req.body.code;
     const codeUsed: IPromotion = await Promotion.findOne<IPromotion>({ code: code, user: req.session.user._id });
-    if (_.isEmpty(code) || codeUsed.code == code || _.isEmpty(codeUsed)) {
+    if (!_.isEmpty(codeUsed) && codeUsed.code == code) {
         throw _.logicError('Cannot create promotion', 'Code is duplicate', 400, ERR.PROMOTION_CODE_IS_DUPLICATE);
     }
 
