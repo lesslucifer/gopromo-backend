@@ -252,7 +252,7 @@ const queries = _ajv({
 });
 router.get('/', _.validQuery(queries), AuthServ.authRole('USER'), _.routeAsync(async (req) => {
     const limit = _.parseIntNull(req.query.limit) || 50;
-    const skip = _.parseIntNull(req.query.skip) || Number.MIN_SAFE_INTEGER;
+    const skip = _.parseIntNull(req.query.skip) || 0;
     console.log(limit);
     console.log(skip);
     const promotions = await Promotion.find<IPromotion>().skip(skip).limit(limit).toArray();
