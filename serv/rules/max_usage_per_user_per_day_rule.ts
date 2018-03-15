@@ -19,7 +19,7 @@ interface ITransactionData {
     }
 }
 
-export class MaxUsagePerUserRule implements IPromotionRule {
+export class MaxUsagePerUserPerDayRule implements IPromotionRule {
     key() {
         return 'max_usage_per_user_per_day';
     }
@@ -37,6 +37,8 @@ export class MaxUsagePerUserRule implements IPromotionRule {
     }
 
     async isValidConfig(data: any): Promise<boolean> {
+        console.log('$$$$$$$$$$$$$$$$$$$$$');
+        console.log(data);
         const val = _.parseIntNull(data);
         if (val == null) {
             return false;
@@ -53,19 +55,19 @@ export class MaxUsagePerUserRule implements IPromotionRule {
         const token = this.genToken(ctx);
         const dataKey = this.dataKey(ctx.transaction);
 
-        await PromotionServ.updatePromotionData(ctx.promotionId, token, {$inc: {[dataKey]: 1}});
+        await PromotionServ.updatePromotionData(ctx.promotionId, token, { $inc: { [dataKey]: 1 } });
     }
 
-    async isUsable(ctx: IRedemptionBatchContext): Promise<{[trId: string]: boolean}> {
+    async isUsable(ctx: IRedemptionBatchContext): Promise<{ [trId: string]: boolean }> {
         const tokens = ctx.transactions.map((tr, i) => ({
             token: this.genToken(PromotionServ.getSingleCtx(ctx, i)),
             transaction: tr
         }));
-        
+
         const dataKeys = ctx.transactions.map(this.dataKey);
-        const promoDataArr = await PromotionData.find({token: _.uniq(tokens.map(tk => tk.token))}, {fields: _.arrToObj(dataKeys, k => k, k => 1)}).toArray();
+        const promoDataArr = await PromotionData.find({ token: _.uniq(tokens.map(tk => tk.token)) }, { fields: _.arrToObj(dataKeys, k => k, k => 1) }).toArray();
         const promoData = _.keyBy(promoDataArr, d => d.token);
-        
+
         const maxUse: number = ctx.config.data;
         const result = _.arrToObj(tokens, tk => tk.transaction.id, (tk, i) => {
             const data = promoData[tk.token];

@@ -6,4 +6,4 @@ echo "Pushing..."
 git push origin stag master
 echo "Switching back to master..."
 git checkout master
-ssh -i ~/.ssh/id_rsa deploy@sv.stag.mpex.vn "~/cmd/deploy_mpexb"
+ssh -i ~/.ssh/id_rsa deploy@sv.stag.mpex.vn "~/cmd/deploy_gpm"

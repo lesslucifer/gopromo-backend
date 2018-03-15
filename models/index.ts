@@ -32,15 +32,16 @@ export function init(db: mongodb.Db) {
 }
 
 async function initIndexes() {
-    await Promotion.createIndex({code: 'hashed'});
-    await Promotion.createIndex({user: 1, code: 1}, {unique: true});
-    await Promotion.createIndex({user: 1, pattern: 1});
+    await Promotion.createIndex({ code: 'hashed' });
+    await Promotion.createIndex({ user: 1, code: 1 }, { unique: true });
+    await Promotion.createIndex({ user: 1, pattern: 1 });
 
-    await PromotionData.createIndex({promotion: 1}, {unique: true});
+    await PromotionData.createIndex({ promotion: 1 });
+    await PromotionData.createIndex({ token: 'hashed' });
 
-    await Redemption.createIndex({promotion: 1, time: -1});
-    await Redemption.createIndex({token: 'hashed'});
+    await Redemption.createIndex({ promotion: 1, time: -1 });
 
-    await PromoApp.createIndex({user: 1, appName: 1});
-    await PromoApp.createIndex({apiKey: 1}, {unique: true});
+
+    await PromoApp.createIndex({ user: 1, appName: 1 });
+    await PromoApp.createIndex({ apiKey: 1 }, { unique: true });
 }

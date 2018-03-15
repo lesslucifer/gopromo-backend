@@ -1,14 +1,16 @@
 import * as moment from 'moment';
 import _ from '../../utils/_';
+
 import { MaxUsagePerUserRule } from './max_usage_per_user_rule';
 import { MaxUsageRule } from './max_usage_rule';
 import { IPromotion, IPromoTransaction, IRuleConfig } from '../../models/index';
+import { MaxUsagePerUserPerDayRule } from './max_usage_per_user_per_day_rule';
 
 export interface IPromotionRule {
     key(): string;
     isValidConfig(data: any): Promise<boolean>;
     isValidTransactionData(transactionData: any): Promise<boolean>;
-    isUsable(ctxs: IRedemptionBatchContext): Promise<{[trId: string]: boolean}>;
+    isUsable(ctxs: IRedemptionBatchContext): Promise<{ [trId: string]: boolean }>;
     recordRedemption(ctx: IRedemptionContext): Promise<void>;
 }
 
@@ -25,9 +27,9 @@ export interface IRedemptionBatchContext {
 }
 
 export class PromotionRules {
-    static readonly RULES: IPromotionRule[] = [new MaxUsagePerUserRule(), new MaxUsageRule()];
+    static readonly RULES: IPromotionRule[] = [new MaxUsagePerUserRule(), new MaxUsageRule(), new MaxUsagePerUserPerDayRule];
     static readonly RULE_REPOSITORY = _.keyBy(PromotionRules.RULES, r => r.key());
-    
+
     static async isValidConfig(configs: IRuleConfig[]): Promise<boolean> {
 
         for (const config of configs) {
@@ -56,10 +58,10 @@ export class PromotionRules {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     static async recordRedemption(promotion: IPromotion, transaction: IPromoTransaction): Promise<void> {
         const rules = promotion.rules.map(r => ({
             rule: this.RULE_REPOSITORY[r.type],
@@ -73,7 +75,7 @@ export class PromotionRules {
         })));
     }
 
-    static async isUsable(promotion: IPromotion, transactions: IPromoTransaction[]): Promise<{transaction: IPromoTransaction, isUsable: boolean}[]> {
+    static async isUsable(promotion: IPromotion, transactions: IPromoTransaction[]): Promise<{ transaction: IPromoTransaction, isUsable: boolean }[]> {
         const result = transactions.map(tr => ({
             transaction: tr,
             isUsable: true
@@ -85,13 +87,13 @@ export class PromotionRules {
                 result.forEach(r => r.isUsable = false);
                 return result;
             }
-            
+
             const usableResult = await rule.isUsable({
                 promotionId: `${promotion._id}`,
                 config: ruleConfig,
                 transactions: transactions
             });
-            
+
             result.forEach(r => r.isUsable = r.isUsable && usableResult[r.transaction.id]);
         }
 
