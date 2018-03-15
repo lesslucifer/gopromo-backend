@@ -64,7 +64,7 @@ export class MaxUsagePerUserPerDayRule implements IPromotionRule {
             transaction: tr
         }));
 
-        const dataKeys = ctx.transactions.map(this.dataKey);
+        const dataKeys = ctx.transactions.map(tr => this.dataKey(tr));
         const promoDataArr = await PromotionData.find({ token: _.uniq(tokens.map(tk => tk.token)) }, { fields: _.arrToObj(dataKeys, k => k, k => 1) }).toArray();
         const promoData = _.keyBy(promoDataArr, d => d.token);
 
