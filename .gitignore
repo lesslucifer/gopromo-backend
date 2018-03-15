@@ -4,3 +4,4 @@
 node_modules
 typings
 env.json
+package-lock.json
