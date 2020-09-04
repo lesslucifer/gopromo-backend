@@ -30,7 +30,7 @@
     "md5": "^2.2.1",
     "memory-cache": "^0.1.6",
     "moment": "^2.14.1",
-    "mongodb": "^2.2.33",
+    "mongodb": "^3.6.1",
     "randomstring": "^1.1.5",
     "redis": "^2.6.2",
     "request": "^2.83.0",
